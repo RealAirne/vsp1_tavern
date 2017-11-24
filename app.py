@@ -44,26 +44,45 @@ def hello_world():
     return json.dumps(userdata)
 
 
+def check_hiring_data(request_data):
+    # Are the keys given correct?
+    group = request_data['group']
+    quest = request_data['quest']
+    message = request_data['message']
+    # how many keys are there? > 3 raises an ERROR (caught in post_hiring())
+    amount_of_keys = len(dict(request_data).keys())
+    if amount_of_keys > 3:
+        raise KeyError
+
+
 @app.route('/hirings', methods=['POST'])
 def post_hiring():
     if request.method == 'POST':
-        request_data = request.data
+        request_data = json.loads(request.data)
+        try:
+            check_hiring_data(request_data)
+
+        except KeyError:
+            bad_request_response = make_response("The body needs to exactly contain the following keys: group, quest, "
+                                                 "message", 400)
+            return bad_request_response
+        # HIRINGS are stored as dicts
         list.append(HIRINGS, request_data)
         print("actual value of HIRINGS: " + str(HIRINGS))
-        response = make_response("Hiring added successfully", 200)
+        response = make_response("Hiring posted successfully", 200)
         return response
     else:
         print("There is only a POST allowed here.")
-        error_response = make_response(405)
-        return error_response
+        not_allowed_response = make_response(405)
+        return not_allowed_response
 
 
-# POST delivers heroclass, capabilities, url
 # TODO dynamic IP
 def get_ip():
     return 'http://172.19.0.63:80'
 
 
+# POST delivers heroclass, capabilities, url
 def register_at_tavern():
     print("register at tavern:")
     ip = get_ip()
@@ -92,17 +111,17 @@ def discovery():
 
     port = json.loads(data.decode())
 
-    DISCOVERED_PORT = port['blackboard_port']
     global DISCOVERED_PORT
+    DISCOVERED_PORT = port['blackboard_port']
 
     sourceip, sourceport = addr
 
-    BLACKBOARD_IP = sourceip
     global BLACKBOARD_IP
+    BLACKBOARD_IP = sourceip
 
     # assemble the whole blackboard URL with port and trailing "/"
-    BLACKBOARD_URL = BLACKBOARD_IP + ":" + DISCOVERED_PORT + "/"
     global BLACKBOARD_URL
+    BLACKBOARD_URL = BLACKBOARD_IP + ":" + DISCOVERED_PORT + "/"
     print("adress: " + str(addr))
 
 
