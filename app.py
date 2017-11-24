@@ -74,8 +74,11 @@ def join_group(group_url):
 def check_hiring_data(request_data):
     # Are the keys given correct?
     group = request_data['group']
+    print("group: " + str(group))
     quest = request_data['quest']
+    print("quest: " + str(quest))
     message = request_data['message']
+    print("message: " + str(message))
     # how many keys are there? > 3 raises an ERROR (caught in post_hiring())
     amount_of_keys = len(dict(request_data).keys())
     if amount_of_keys > 3:
@@ -126,7 +129,9 @@ def hiring_endpoint():
             too_busy_response = make_response("Sorry, I am busy", 423)
             return too_busy_response
 
+        # Todo string und json beidermaßen verarbeiten (?)
         request_data = request.get_json()
+        print(str(request_data))
 
         try:
             check_hiring_data(request_data)
@@ -324,8 +329,7 @@ def main():
     # register_at_tavern()
     # bully()
 
-
 main()
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=80)
+    app.run(debug=True, host='0.0.0.0', port=80)
