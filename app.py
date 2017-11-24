@@ -314,28 +314,6 @@ def election():
         return incorrect_payload_response()
 
 
-# @app.route('/hirings', methods=['POST'])
-#     def post_hiring():
-#         if request.method == 'POST':
-#             request_data = json.loads(request.data)
-#             try:
-#                 check_hiring_data(request_data)
-#
-#             except KeyError:
-#                 bad_request_response = make_response(
-#                     "The body needs to exactly contain the following keys: group, quest, "
-#                     "message", 400)
-#                 return bad_request_response
-#             # HIRINGS are stored as dicts
-#             list.append(HIRINGS, request_data)
-#             print("actual value of HIRINGS: " + str(HIRINGS))
-#             response = make_response("Hiring posted successfully", 200)
-#             return response
-#         else:
-#             print("There is only a POST allowed here.")
-#             not_allowed_response = make_response(405)
-#             return not_allowed_response
-
 
 def main():
     print("HEJEHEHEHEJEHEJEH")
