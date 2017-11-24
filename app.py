@@ -126,7 +126,7 @@ def take_task_and_perform(assignment_dict):
     method = assignment_dict['method']
     data = assignment_dict['data']
 
-    # TODO wie sieht eine resource aus? Annahme vollständige URL
+    # TODO wie sieht eine resource aus? Annahme vollstaendige URL
     if method in ['post', 'POST', 'Post', 'pOst', 'poSt', 'posT']:
         post_request = requests.post(resource, data)
         return ['post', post_request]
@@ -174,7 +174,7 @@ def assignment_endpoint():
             answer = assemble_json_answer(received_id, task, resource, method_used, reply, jaume, message_text)
             requests.post(callback, answer)
 
-            # TODO was passiert, wenn wir eine Quest nicht abschließen könen?
+            # TODO was passiert, wenn wir eine Quest nicht abschliessen koenen?
 
     else:
         return not_allowed_response()
@@ -235,26 +235,31 @@ def create_group():
 
     #####################Bully Algorithm########################
 
+
 def bully():
-        send_election()
+    send_election()
 
 
 def send_election():
-        # throw exception if there are no bigger ones or if nobody is answering
-        for member in GROUP_MEMBERS:
-            if (member['name'] > 'Jaume'):
-                #TODO: Send
-                print member['name']
+    # TODO: throw exception if there are no bigger ones or if nobody is answering
+    for member in GROUP_MEMBERS:
+        if (member['name'] > 'Jaume'):
+            # TODO: Send
+            print(member['name'])
 
-        #response = requests.post("http://0.0.0.0:80/election", {'payload': 'election'})
+
+            # response = requests.post("http://0.0.0.0:80/election", {'payload': 'election'})
+
 
 @app.route('/election', methods=['POST'])
 def election():
-    if request.data['payload'] == 'election':
-        return request.data
+    data = json.loads(request.data)
+    payload = data['payload']
+    if payload == 'election':
+        return payload
 
 
-#     @app.route('/hirings', methods=['POST'])
+# @app.route('/hirings', methods=['POST'])
 #     def post_hiring():
 #         if request.method == 'POST':
 #             request_data = json.loads(request.data)
@@ -284,10 +289,10 @@ def main():
     # DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
     # print(DISCOVERED_IP)
     # register_at_tavern()
-    #bully()
+    # bully()
 
 
 main()
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=80)
+    app.run(debug=True, host='0.0.0.0', port=80)
