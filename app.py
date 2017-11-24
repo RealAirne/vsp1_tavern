@@ -255,8 +255,9 @@ def send_election():
 def election():
     data = json.loads(request.data)
     payload = data['payload']
-    if payload == 'election':
+    if 'election' == payload:
         return payload
+    else: return request.data
 
 
 # @app.route('/hirings', methods=['POST'])
