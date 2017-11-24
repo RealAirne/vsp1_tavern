@@ -44,7 +44,7 @@ def register_at_tavern():
     url = ip + '/jaume'
     json_data = {'heroclass': 'Catalonian Chiller', 'capabilities': '', 'url': '' + url}
     taverna_url = 'http://172.19.0.3:5000/taverna/adventurers'
-    response = requests.post(url=taverna_url, headers=HEADER_APPL_JSON, json=json_data)
+    response = requests.post(url=taverna_url, headers=HEADER_APPL_JSON, json=json_data, auth=HTTPBasicAuth("Jaume", "Jaume"))
     print("response (register at tavern)" + repr(response.status_code))
     print("hello")
 
