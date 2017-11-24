@@ -174,7 +174,7 @@ def assignment_endpoint():
             answer = assemble_json_answer(received_id, task, resource, method_used, reply, jaume, message_text)
             requests.post(callback, answer)
 
-            # TODO was passiert, wenn wir eine Quest nicht abschließen könen?
+            # TODO was passiert, wenn wir eine Quest nicht abschließen können?
 
     else:
         return not_allowed_response()
@@ -235,18 +235,20 @@ def create_group():
 
     #####################Bully Algorithm########################
 
+
 def bully():
-        send_election()
+    send_election()
 
 
 def send_election():
-        # throw exception if there are no bigger ones or if nobody is answering
-        for member in GROUP_MEMBERS:
-            if (member['name'] > 'Jaume'):
-                #TODO: Send
-                print member['name']
+    # throw exception if there are no bigger ones or if nobody is answering
+    for member in GROUP_MEMBERS:
+        if (member['name'] > 'Jaume'):
+            # TODO: Send
+            print(member['name'])
 
-        #response = requests.post("http://0.0.0.0:80/election", {'payload': 'election'})
+            # response = requests.post("http://0.0.0.0:80/election", {'payload': 'election'})
+
 
 @app.route('/election', methods=['POST'])
 def election():
@@ -254,7 +256,7 @@ def election():
         return request.data
 
 
-#     @app.route('/hirings', methods=['POST'])
+# @app.route('/hirings', methods=['POST'])
 #     def post_hiring():
 #         if request.method == 'POST':
 #             request_data = json.loads(request.data)
@@ -284,7 +286,7 @@ def main():
     # DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
     # print(DISCOVERED_IP)
     # register_at_tavern()
-    #bully()
+    # bully()
 
 
 main()
