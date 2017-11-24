@@ -12,7 +12,7 @@ HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 # A global variable to manage the hirings
 HIRINGS = []
 LIMIT_OF_HIRINGS = 1
-GROUP_MEMBERS = [{'name': 'Arne', 'url': 'url'}, {'name': 'Jerom', 'url': 'url'}]
+GROUP_MEMBERS = [{'name': 'Arne', 'url': 'http://0.0.0.0/election'}, {'name': 'Jerom', 'url': 'http://0.0.0.0/election'}]
 
 # TODO do a research on how to use URIs (or what's meant here)
 # userdata_user = "'user': '/users/Jaume',"
@@ -33,6 +33,16 @@ userdata = {'user': 'link to the registered user account',
             'assignments': 'uri to which one may post an assignment',
             'messages': 'ri to which one may post messages'
             }
+
+#TODO: Daten
+def create_algorithmdata(payload_string):
+    return {
+        "algorithm": "bully",
+        "payload": ""+ payload_string,
+        "user": "http://172.19.0.3:5000/taverna/adventurers",
+        "job": "JSON description of the job to do",
+        "message": "something you want to tell the other one"
+    }
 
 
 # def get_login_token(user, passw):
@@ -96,6 +106,12 @@ def not_allowed_response():
 def bad_request_response(keys_needed):
     bad_request_response = make_response("The body needs to exactly contain the following keys: " + keys_needed, 400)
     return bad_request_response
+
+
+def incorrect_payload_response():
+    print("Payload is not any of those: election, answer, coordinator")
+    incorrect_payload_response = make_response("Payload is not any of those: election, answer, coordinator", 405)
+    return incorrect_payload_response
 
 
 @app.route('/hirings', methods=['POST'])
@@ -254,15 +270,28 @@ def bully():
     send_election()
 
 
-def send_election():
-    # TODO: throw exception if there are no bigger ones or if nobody is answering
+def find_members_with_higher_id():
+    stronger_members = []
     for member in GROUP_MEMBERS:
         if (member['name'] > 'Jaume'):
-            # TODO: Send
-            print(member['name'])
+            stronger_members.append(member['name'])
+    if not stronger_members:
+        raise ValueError('No higher Members found')
+    return stronger_members
 
 
-            # response = requests.post("http://0.0.0.0:80/election", {'payload': 'election'})
+
+def send_election():
+    # TODO: throw exception if there are no bigger ones or if nobody is answering
+    #TODO: Catch ValueError
+    members_to_consult = find_members_with_higher_id()
+    for member in members_to_consult:
+        #TODO: Send Election Message!
+        # TODO: Send, raise ValueError if Member not reachable
+        pass
+
+
+# response = requests.post("http://0.0.0.0:80/election", {'payload': 'election'})
 
 
 @app.route('/election', methods=['POST'])
@@ -270,8 +299,19 @@ def election():
     data = json.loads(request.data)
     payload = data['payload']
     if 'election' == payload:
-        return payload
-    else: return request.data
+        print('Got election, starting own bully algorithm and responding with answer')
+        algorithmdata = str(create_algorithmdata('answer'))
+        #TODO: start bully algorithm on your own
+        return make_response(algorithmdata, 200)
+    elif 'answer' == payload:
+        print('Got Answer')
+        return request.data
+    elif 'coordinator' == payload:
+        # TODO: Remember Coordinator
+        print('Got coordinator, obey the leader')
+        return request.data
+    else:
+        return incorrect_payload_response()
 
 
 # @app.route('/hirings', methods=['POST'])
@@ -310,4 +350,4 @@ def main():
 main()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=False, host='0.0.0.0', port=80)
