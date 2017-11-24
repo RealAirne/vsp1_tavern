@@ -3,6 +3,7 @@ import json
 import requests
 import socket
 from requests.auth import HTTPBasicAuth
+from requests.exceptions import ConnectionError, MissingSchema
 
 app = Flask(__name__)
 
@@ -59,7 +60,15 @@ def hello_world():
 
 
 def join_group(group_url):
-    requests.post(group_url)
+    try:
+        requests.get(group_url, timeout=0.001)
+    except (ConnectionError, MissingSchema) as ex:
+        print(ex)
+        print("BAD URL!")
+        return make_response("The URL given is not specified well!", 400)
+    reply = requests.post(group_url)
+    status = reply.status_code
+    print("The status of joining the group was " + status)
 
 
 def check_hiring_data(request_data):
@@ -110,12 +119,14 @@ def hiring_endpoint():
     if request.method == 'POST':
         # check wether the hero is busy (length of HIRINGS)
         amount_of_hirings = len(HIRINGS)
+        print("Amount of hirings:" + str(amount_of_hirings))
         if amount_of_hirings >= LIMIT_OF_HIRINGS:
+            print("oO too busy!!")
             # if the hero is busy, he responds with 423-locked HTTP-Code
             too_busy_response = make_response("Sorry, I am busy", 423)
             return too_busy_response
 
-        request_data = json.loads(request.data)
+        request_data = request.get_json()
 
         try:
             check_hiring_data(request_data)
@@ -123,8 +134,11 @@ def hiring_endpoint():
         except KeyError:
             return bad_request_response("group, quest, message")
 
-        join_group(request_data['group'])
-
+        print("check completed!")
+        joined_group = join_group(request_data['group'])
+        if joined_group is not None:
+            return joined_group
+        print("joined group")
         # HIRINGS are stored as dicts
         list.append(HIRINGS, request_data)
         print("actual value of HIRINGS: " + str(HIRINGS))
