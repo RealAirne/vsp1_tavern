@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 import json
 import requests
 import socket
@@ -43,7 +43,15 @@ def hello_world():
     json.dumps(userdata)
     return json.dumps(userdata)
 
-@app.route('/hirings')
+
+@app.route('/hirings', methods=['POST'])
+def post_hiring():
+    if request.method == 'POST':
+        request_data = [request.data]
+        list.append(HIRINGS, request_data)
+        print("actual value of HIRINGS: " + str(HIRINGS))
+    else:
+        print("There is only a POST allowed here.")
 
 
 # POST delivers heroclass, capabilities, url
