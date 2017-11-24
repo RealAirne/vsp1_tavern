@@ -40,6 +40,8 @@ def create_group():
     data = ""
     reply = requests.post(BLACKBOARD_URL, data)
     return reply
+
+
 # {
 #     "message": "Created Group",
 #     "object": [
@@ -76,10 +78,30 @@ def main():
     reply_as_json = group_reply.request.get_json()
     member_url, group_url = extract_member_url(reply_as_json)
 
-    #TODO find Jaume and send him an invite him (sending member_url), quest und message sind prototypen
+    # TODO find Jaume and send him an invite him (sending member_url), quest und message sind prototypen
     hiring_data = {"group": group_url, "quest": "pi", "message": "many danks"}
     jaume_reply = requests.post("172.19.0.81/hirings", json.dumps(hiring_data))
     jaume_status = jaume_reply.status_code
     print("Jaume Status: " + jaume_status)
 
+
 main()
+
+# In order to test the application, post the following snippet of a Dockerfle into a real Dockerfile and upload it into
+# (OwnCloud) vsp2_test/container, as well as the test.py - file
+
+# FROM ubuntu:latest
+# RUN apt-get update -y --fix-missing
+# RUN apt-get install -y python3 python3-pip
+# RUN pip3 install --upgrade pip
+#
+# #python3-dev build-essential
+# COPY . /app
+# WORKDIR /app
+# RUN pip3 install requests
+#
+# # Make port 80 available to the world outside this container
+# EXPOSE 80
+#
+# ENTRYPOINT ["python3"]
+# CMD ["-u", "test.py"]

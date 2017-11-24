@@ -346,25 +346,6 @@ def main():
     # register_at_tavern()
     # bully()
 
-# In order to test the application, post the following snippet of a Dockerfle into a real Dockerfile and upload it into
-# (OwnCloud) vsp2_test/container, as well as the test.py - file
-
-# FROM ubuntu:latest
-# RUN apt-get update -y --fix-missing
-# RUN apt-get install -y python3 python3-pip
-# RUN pip3 install --upgrade pip
-#
-# #python3-dev build-essential
-# COPY . /app
-# WORKDIR /app
-# RUN pip3 install requests
-#
-# # Make port 80 available to the world outside this container
-# EXPOSE 80
-#
-# ENTRYPOINT ["python3"]
-# CMD ["-u", "test.py"]
-
 main()
 
 if __name__ == '__main__':
