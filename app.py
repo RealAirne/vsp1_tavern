@@ -10,6 +10,7 @@ HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 
 # A global variable to manage the hirings
 HIRINGS = []
+LIMIT_OF_HIRINGS = 1
 
 # TODO do a research on how to use URIs (or what's meant here)
 userdata_user = "'user': '/users/Jaume',"
@@ -19,7 +20,9 @@ userdata_hirings = "'hirings': '/hirings',"
 userdata_assignments = "'assignments': 'assignments',"
 userdata_messages = "'messages': '/messages'"
 
-userdata = {userdata_user + userdata_idle + userdata_group + userdata_hirings + userdata_assignments + userdata_messages}
+userdata = {
+    userdata_user + userdata_idle + userdata_group + userdata_hirings + userdata_assignments + userdata_messages}
+
 
 # userdata = {'user': 'link to the registered user account',
 #             'idle': False,
@@ -44,6 +47,10 @@ def hello_world():
     return json.dumps(userdata)
 
 
+def join_group(group_url):
+    requests.post(group_url)
+
+
 def check_hiring_data(request_data):
     # Are the keys given correct?
     group = request_data['group']
@@ -55,26 +62,121 @@ def check_hiring_data(request_data):
         raise KeyError
 
 
+def check_assignment_data(request_data):
+    # Are the keys given correct?
+    id = request_data['id']
+    task = request_data['task']
+    resource = request_data['resource']
+    method = request_data['method']
+    data = request_data['data']
+    callback = request_data['callback']
+    message = request_data['message']
+    # how many keys are there? > 7 raises an ERROR (caught in post_hiring())
+    amount_of_keys = len(dict(request_data).keys())
+    if amount_of_keys > 7:
+        raise KeyError
+
+
+def not_allowed_response():
+    print("There is only a POST allowed here.")
+    not_allowed_response = make_response(405)
+    return not_allowed_response
+
+
+def bad_request_response(keys_needed):
+    bad_request_response = make_response("The body needs to exactly contain the following keys: " + keys_needed, 400)
+    return bad_request_response
+
+
 @app.route('/hirings', methods=['POST'])
-def post_hiring():
+def hiring_endpoint():
     if request.method == 'POST':
+        # check wether the hero is busy (length of HIRINGS)
+        amount_of_hirings = len(HIRINGS)
+        if amount_of_hirings >= LIMIT_OF_HIRINGS:
+            # if the hero is busy, he responds with 423-locked HTTP-Code
+            too_busy_response = make_response("Sorry, I am busy", 423)
+            return too_busy_response
+
         request_data = json.loads(request.data)
+
         try:
             check_hiring_data(request_data)
 
         except KeyError:
-            bad_request_response = make_response("The body needs to exactly contain the following keys: group, quest, "
-                                                 "message", 400)
-            return bad_request_response
+            return bad_request_response("group, quest, message")
+
+        join_group(request_data['group'])
+
         # HIRINGS are stored as dicts
         list.append(HIRINGS, request_data)
         print("actual value of HIRINGS: " + str(HIRINGS))
-        response = make_response("Hiring posted successfully", 200)
+        response = make_response("Hiring posted successfully, joined the group!", 200)
         return response
     else:
-        print("There is only a POST allowed here.")
-        not_allowed_response = make_response(405)
-        return not_allowed_response
+        return not_allowed_response()
+
+
+# TODO only can perform tasks, if the method is already known
+# TODO how about authentication?
+def take_task_and_perform(assignment_dict):
+    task_uri = assignment_dict['task']
+    resource = assignment_dict['resource']
+    method = assignment_dict['method']
+    data = assignment_dict['data']
+
+    # TODO wie sieht eine resource aus? Annahme vollständige URL
+    if method in ['post', 'POST', 'Post', 'pOst', 'poSt', 'posT']:
+        post_request = requests.post(resource, data)
+        return ['post', post_request]
+
+    elif method in ['get', 'Get', 'GET', 'gEt', 'geT', 'GEt', 'gET', 'GeT']:
+        get_request = requests.get(resource)
+        return ['get', get_request]
+
+    elif method in ['put', 'Put', 'PUT']:
+        put_request = requests.put(resource, data)
+        return ['put', put_request]
+
+    elif method in ['delete', 'DELETE', 'del', 'remove', 'rm']:
+        delete_request = requests.delete(resource)
+        return ['delete', delete_request]
+
+
+def assemble_json_answer(id, task, resource, method, data, user, message):
+    dictionary = {'id': id, 'task': task, 'resource': resource, 'method': method, 'data': data, 'user': user,
+                  'message': message}
+    return json.dumps(dictionary)
+
+
+@app.route('/assignments', methods=['POST'])
+def assignment_endpoint():
+    if request.method == 'POST':
+        request_data = request.data
+        try:
+            check_assignment_data(request_data)
+        except KeyError:
+            return bad_request_response("id, task, resource, method, data, callback, message")
+
+        received_id = request_data['id']
+        task = request_data['task']
+        resource = request_data['resource']
+        callback = request_data['callback']
+        message_text = "Ye boiii, we did it!"
+
+        # After pre-checks are completed, the hero can take the task
+        method_used, reply = take_task_and_perform(request_data)
+        status = reply.status_code
+        # Was the quest succesful?
+        if status in range(start=200, stop=299, step=1):
+            jaume = BLACKBOARD_URL + 'users/Jaume'
+            answer = assemble_json_answer(received_id, task, resource, method_used, reply, jaume, message_text)
+            requests.post(callback, answer)
+
+            # TODO was passiert, wenn wir eine Quest nicht abschließen könen?
+
+    else:
+        return not_allowed_response()
 
 
 # TODO dynamic IP
