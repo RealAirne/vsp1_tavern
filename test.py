@@ -83,9 +83,11 @@ def main():
     member_url, group_url = extract_member_url(reply_as_json)
 
     # TODO find Jaume and send him an invite him (sending member_url), quest und message sind prototypen
-    hiring_data = {"group": group_url, "quest": "pi", "message": "many danks"}
-    print(json.dumps(hiring_data))
-    jaume_reply = requests.post("http://172.19.0.81:80/hirings", json.dumps(hiring_data), headers=HEADER_APPL_JSON)
+    # hiring_data = {"group": group_url, "quest": "pi", "message": "many danks"}
+    hiring_data = '{"group":' + group_url + ', "quest": "pi", "message": "many danks"}'
+    # print(json.dumps(hiring_data))
+    jaume_reply = requests.post("http://172.19.0.81:80/hirings", hiring_data, headers=HEADER_APPL_JSON)
+    # jaume_reply = requests.post("http://172.19.0.81:80/hirings", json.dumps(hiring_data), headers=HEADER_APPL_JSON)
     jaume_status = jaume_reply.status_code
     print("Jaume Status: " + str(jaume_status))
 

@@ -129,7 +129,8 @@ def hiring_endpoint():
             too_busy_response = make_response("Sorry, I am busy", 423)
             return too_busy_response
 
-        request_data = json.loads(request.get_json())
+        # Todo string und json beidermaßen verarbeiten (?)
+        request_data = request.get_json()
         print(str(request_data))
 
         try:
