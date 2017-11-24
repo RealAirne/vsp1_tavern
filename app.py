@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, make_response
 import json
 import requests
 import socket
@@ -47,11 +47,15 @@ def hello_world():
 @app.route('/hirings', methods=['POST'])
 def post_hiring():
     if request.method == 'POST':
-        request_data = [request.data]
+        request_data = request.data
         list.append(HIRINGS, request_data)
         print("actual value of HIRINGS: " + str(HIRINGS))
+        response = make_response("Hiring added successfully", 200)
+        return response
     else:
         print("There is only a POST allowed here.")
+        error_response = make_response(405)
+        return error_response
 
 
 # POST delivers heroclass, capabilities, url
@@ -114,7 +118,7 @@ def main():
     # global DISCOVERED_IP
     # DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
     # print(DISCOVERED_IP)
-    register_at_tavern()
+    # register_at_tavern()
 
 
 main()
