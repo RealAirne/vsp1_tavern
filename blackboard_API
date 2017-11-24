@@ -1,0 +1,290 @@
+{
+    "definitions": {},
+    "info": {
+        "title": "Cool product name",
+        "version": "0.0.0"
+    },
+    "paths": {
+        "/blackboard/deliverables/{id}": {
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Details about a single deliverable",
+                "tags": [
+                    "deliverable"
+                ]
+            }
+        },
+        "/blackboard/deliveries": {
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Lists the deliveries",
+                "tags": [
+                    "delivery"
+                ]
+            }
+        },
+        "/blackboard/deliveries/{id}": {
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Details about a single delivery",
+                "tags": [
+                    "delivery"
+                ]
+            }
+        },
+        "/blackboard/quests": {
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Lists the quests available",
+                "tags": [
+                    "quests"
+                ]
+            }
+        },
+        "/blackboard/quests/{id}": {
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Shows details about the quest",
+                "tags": [
+                    "quest"
+                ]
+            }
+        },
+        "/blackboard/quests/{id}/deliveries": {
+            "get": {
+                "description": "<br/>To solve a quest one has to post the quest token as<br/><br/>{\"tokens\":{\"<task_uri>\":\"<token>\"}}<br/><br/>Solving quests requires authentication.",
+                "responses": {},
+                "summary": "Deliveries are the prove that a quest has been solved.",
+                "tags": [
+                    "task"
+                ]
+            },
+            "post": {
+                "description": "<br/>To solve a quest one has to post the quest token as<br/><br/>{\"tokens\":{\"<task_uri>\":\"<token>\"}}<br/><br/>Solving quests requires authentication.",
+                "responses": {},
+                "summary": "Deliveries are the prove that a quest has been solved.",
+                "tags": [
+                    "task"
+                ]
+            }
+        },
+        "/blackboard/quests/{id}/tasks": {
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Lists the tasks to be fulfilled to solve the quest",
+                "tags": [
+                    "task"
+                ]
+            }
+        },
+        "/blackboard/tasks/{id}": {
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Details about a single task",
+                "tags": [
+                    "task"
+                ]
+            }
+        },
+        "/login": {
+            "get": {
+                "description": "This will provide you with an authentication token to access further restricted resources.<br/><br/>The token is used by using an authorization header:<br/><br/>Authorization:Token <token><br/><br/>Obviously you must login and thus you have to provide an already valid authentication.<br/>If you not refreshing your token, you may use basic auth to do that.<br/><br/>Requires authentication",
+                "responses": {},
+                "summary": "Logs the user in by granting an access token with a limited time period.",
+                "tags": [
+                    "authentication"
+                ]
+            },
+            "post": {
+                "description": "This will provide you with an authentication token to access further restricted resources.<br/><br/>The token is used by using an authorization header:<br/><br/>Authorization:Token <token><br/><br/>Obviously you must login and thus you have to provide an already valid authentication.<br/>If you not refreshing your token, you may use basic auth to do that.<br/><br/>Requires authentication",
+                "responses": {},
+                "summary": "Logs the user in by granting an access token with a limited time period.",
+                "tags": [
+                    "authentication"
+                ]
+            }
+        },
+        "/map": {
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Your friendly map, telling you where locations are found",
+                "tags": [
+                    "location"
+                ]
+            }
+        },
+        "/map/{name}": {
+            "get": {
+                "description": "<br/>Locations do update itself. Do not try to update them. You don't know the key ;)",
+                "responses": {},
+                "summary": "Information about a location on the map",
+                "tags": [
+                    "location"
+                ]
+            },
+            "put": {
+                "description": "<br/>Locations do update itself. Do not try to update them. You don't know the key ;)",
+                "responses": {},
+                "summary": "Information about a location on the map",
+                "tags": [
+                    "location"
+                ]
+            }
+        },
+        "/taverna/adventurers": {
+            "get": {
+                "description": "<br/>Subscribe yourself with<br/>{<br/>  \"heroclass\":\"<class>\",<br/>  \"capabilities\":\"<your earned capabilities>\",<br/>  \"url\":\"<the full url where one might reach you>\"<br/>}",
+                "responses": {},
+                "summary": "The list of adventurerer known to the local taverna",
+                "tags": [
+                    "adventurer"
+                ]
+            },
+            "post": {
+                "description": "<br/>Subscribe yourself with<br/>{<br/>  \"heroclass\":\"<class>\",<br/>  \"capabilities\":\"<your earned capabilities>\",<br/>  \"url\":\"<the full url where one might reach you>\"<br/>}",
+                "responses": {},
+                "summary": "The list of adventurerer known to the local taverna",
+                "tags": [
+                    "adventurer"
+                ]
+            }
+        },
+        "/taverna/adventurers/{name}": {
+            "delete": {
+                "description": "",
+                "responses": {},
+                "summary": "Details about a single adventurer",
+                "tags": [
+                    "adventurer"
+                ]
+            },
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Details about a single adventurer",
+                "tags": [
+                    "adventurer"
+                ]
+            },
+            "put": {
+                "description": "",
+                "responses": {},
+                "summary": "Details about a single adventurer",
+                "tags": [
+                    "adventurer"
+                ]
+            }
+        },
+        "/taverna/groups": {
+            "get": {
+                "description": "<br/>The guy creating a group is the owner of the group.<br/>He does NOT automatically join it!<br/>Only the owner can disband a group, but the member may leave individualy<br/><br/>Just do a post with empty data to create a new group (watch the Location header)",
+                "responses": {},
+                "summary": "Groups formed out of adventurer which want to solve something together.",
+                "tags": [
+                    "Group"
+                ]
+            },
+            "post": {
+                "description": "<br/>The guy creating a group is the owner of the group.<br/>He does NOT automatically join it!<br/>Only the owner can disband a group, but the member may leave individualy<br/><br/>Just do a post with empty data to create a new group (watch the Location header)",
+                "responses": {},
+                "summary": "Groups formed out of adventurer which want to solve something together.",
+                "tags": [
+                    "Group"
+                ]
+            }
+        },
+        "/taverna/groups/{id}": {
+            "delete": {
+                "description": "<br/>The guy creating a group is the owner of the group.<br/>He does NOT automatically join it!<br/>Only the owner can disband a group, but the member may leave individualy<br/>",
+                "responses": {},
+                "summary": "Information about a single group",
+                "tags": [
+                    "Group"
+                ]
+            },
+            "get": {
+                "description": "<br/>The guy creating a group is the owner of the group.<br/>He does NOT automatically join it!<br/>Only the owner can disband a group, but the member may leave individualy<br/>",
+                "responses": {},
+                "summary": "Information about a single group",
+                "tags": [
+                    "Group"
+                ]
+            }
+        },
+        "/taverna/groups/{id}/members": {
+            "get": {
+                "description": "<br/>To join just post to join the group",
+                "responses": {},
+                "summary": "The members of a group",
+                "tags": [
+                    "Group"
+                ]
+            },
+            "post": {
+                "description": "<br/>To join just post to join the group",
+                "responses": {},
+                "summary": "The members of a group",
+                "tags": [
+                    "Group"
+                ]
+            }
+        },
+        "/users": {
+            "get": {
+                "description": "Lists the available users of the system.<br/>You may register yourself with a post of {\"name\":\"<name>\", \"password\":\"<password>\"}",
+                "responses": {},
+                "summary": "The list of users",
+                "tags": [
+                    "users"
+                ]
+            },
+            "post": {
+                "description": "Lists the available users of the system.<br/>You may register yourself with a post of {\"name\":\"<name>\", \"password\":\"<password>\"}",
+                "responses": {},
+                "summary": "The list of users",
+                "tags": [
+                    "users"
+                ]
+            }
+        },
+        "/users/{name}": {
+            "get": {
+                "description": "",
+                "responses": {},
+                "summary": "Shows details about a single user",
+                "tags": [
+                    "user"
+                ]
+            }
+        },
+        "/users/{name}/encryption_key": {
+            "get": {
+                "description": "This will provide information about the encryption key used when<br/>comminicating in passwordless mode (hopefully soon to come)<br/>User has to be authenticated by basic auth to use this resource.",
+                "responses": {},
+                "summary": "Gives the users encryption key.",
+                "tags": [
+                    "user"
+                ]
+            }
+        },
+        "/whoami": {
+            "get": {
+                "description": "Requires authentication.",
+                "responses": {},
+                "summary": "Tells the user who he is.",
+                "tags": [
+                    "user"
+                ]
+            }
+        }
+    },
+    "swagger": "2.0"
+}
