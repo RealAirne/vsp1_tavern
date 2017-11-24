@@ -8,13 +8,26 @@ app = Flask(__name__)
 
 HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 
-userdata = {'user': 'link to the registered user account',
-            'idle': False,
-            'group': 'url to the group you are in',
-            'hirings': 'uri to which one may post to hire you for a group',
-            'assignments': 'uri to which one may post an assignment',
-            'messages': 'ri to which one may post messages'
-            }
+# A global variable to manage the hirings
+HIRINGS = []
+
+# TODO do a research on how to use URIs (or what's meant here)
+userdata_user = "'user': '/users/Jaume',"
+userdata_idle = "'idle': False,"
+userdata_group = "'group': None,"
+userdata_hirings = "'hirings': '/hirings',"
+userdata_assignments = "'assignments': 'assignments',"
+userdata_messages = "'messages': '/messages'"
+
+userdata = {userdata_user + userdata_idle + userdata_group + userdata_hirings + userdata_assignments + userdata_messages}
+
+# userdata = {'user': 'link to the registered user account',
+#             'idle': False,
+#             'group': 'url to the group you are in',
+#             'hirings': 'uri to which one may post to hire you for a group',
+#             'assignments': 'uri to which one may post an assignment',
+#             'messages': 'ri to which one may post messages'
+#             }
 
 
 # def get_login_token(user, passw):
@@ -29,6 +42,8 @@ userdata = {'user': 'link to the registered user account',
 def hello_world():
     json.dumps(userdata)
     return json.dumps(userdata)
+
+@app.route('/hirings')
 
 
 # POST delivers heroclass, capabilities, url
