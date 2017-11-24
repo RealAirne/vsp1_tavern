@@ -126,7 +126,7 @@ def hiring_endpoint():
             too_busy_response = make_response("Sorry, I am busy", 423)
             return too_busy_response
 
-        request_data = request.get_json()
+        request_data = json.loads(request.get_json())
 
         try:
             check_hiring_data(request_data)

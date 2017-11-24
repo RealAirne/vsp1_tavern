@@ -6,6 +6,8 @@ from requests.auth import HTTPBasicAuth
 username = "Jaume"
 password = "Jaume"
 
+HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
+
 
 def discovery():
     UDP_IP = ''
@@ -33,12 +35,14 @@ def discovery():
     global BLACKBOARD_URL
     BLACKBOARD_URL = str(BLACKBOARD_IP) + ":" + str(DISCOVERED_PORT) + "/"
     print("adress: " + str(addr))
+    print("blackboard_url: " + str(addr))
 
 
 def create_group():
     # in case of creating a group, data is empty. The hint was "watch the location header"... TODO investigate that!
-    data = ""
-    reply = requests.post(BLACKBOARD_URL, data)
+    # data = ""
+    group_url = "http://" + BLACKBOARD_URL + "taverna/groups"
+    reply = requests.post(url=group_url, auth=HTTPBasicAuth(username=username, password=password))
     return reply
 
 
@@ -60,7 +64,7 @@ def create_group():
 
 
 def extract_member_url(json_var):
-    object_var = json_var['object'][1]
+    object_var = json_var['object'][0]
     links = object_var['_links']
     members_url = links['members']
     group_url = links['self']
@@ -72,17 +76,18 @@ def main():
     # Create a new group
     group_reply = create_group()
     group_status = group_reply.status_code
-    print("group_status: " + group_status)
+    print("group_status: " + str(group_status))
 
     # gather the information from the group_request to obtain the member_url and join it
-    reply_as_json = group_reply.request.get_json()
+    reply_as_json = group_reply.json()
     member_url, group_url = extract_member_url(reply_as_json)
 
     # TODO find Jaume and send him an invite him (sending member_url), quest und message sind prototypen
     hiring_data = {"group": group_url, "quest": "pi", "message": "many danks"}
-    jaume_reply = requests.post("172.19.0.81/hirings", json.dumps(hiring_data))
+    print(json.dumps(hiring_data))
+    jaume_reply = requests.post("http://172.19.0.81/hirings", json.dumps(hiring_data), headers=HEADER_APPL_JSON)
     jaume_status = jaume_reply.status_code
-    print("Jaume Status: " + jaume_status)
+    print("Jaume Status: " + str(jaume_status))
 
 
 main()
