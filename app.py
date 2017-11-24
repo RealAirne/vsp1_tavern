@@ -49,7 +49,7 @@ def hello_world():
 # POST delivers heroclass, capabilities, url
 # TODO dynamic IP
 def get_ip():
-    return '172.19.0.63'
+    return 'http://172.19.0.63:80'
 
 
 def register_at_tavern():
@@ -57,7 +57,7 @@ def register_at_tavern():
     ip = get_ip()
     # TODO endpoint jaume erstellen
     # TODO IP eintragen in /users/Jaume
-    url = ip + '/jaume'
+    url = ip + '/'
     json_data = {'heroclass': 'Catalonian Chiller', 'capabilities': '', 'url': '' + url}
     taverna_url = 'http://172.19.0.3:5000/taverna/adventurers'
     response = requests.post(url=taverna_url, headers=HEADER_APPL_JSON, json=json_data,
