@@ -1,13 +1,13 @@
 FROM ubuntu:latest
 RUN apt-get update -y
-RUN apt-get install -y python-pip python-dev build-essential
+RUN apt-get install -y python3 python3-pip python3-dev build-essential
 COPY . /app
 WORKDIR /app
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 # Make port 80 available to the world outside this container
 EXPOSE 80
 
 
-ENTRYPOINT ["python"]
+ENTRYPOINT ["python3"]
 CMD ["-u", "app.py"]
