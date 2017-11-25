@@ -9,6 +9,12 @@ app = Flask(__name__)
 
 HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 
+DISCOVERED_PORT = ""
+BLACKBOARD_IP = ""
+BLACKBOARD_URL_NO_TRAIL = ""
+BLACKBOARD_URL = ""
+DISCOVERED_IP = ""
+
 # A global variable to manage the hirings
 HIRINGS = []
 LIMIT_OF_HIRINGS = 1
@@ -140,7 +146,9 @@ def hiring_endpoint():
             return bad_request_response("group, quest, message")
 
         print("check completed!")
-        joined_group = join_group(request_data['group'])
+        url_to_join = "http://" + str(BLACKBOARD_URL_NO_TRAIL) + request_data['group']
+        print(url_to_join)
+        joined_group = join_group(url_to_join)
         if joined_group is not None:
             return joined_group
         print("joined group")
@@ -249,18 +257,21 @@ def discovery():
 
     port = json.loads(data.decode())
 
-    global DISCOVERED_PORT
-    DISCOVERED_PORT = port['blackboard_port']
+    discovered_port = port['blackboard_port']
 
     sourceip, sourceport = addr
 
-    global BLACKBOARD_IP
-    BLACKBOARD_IP = sourceip
+    blackboard_ip = sourceip
 
     # assemble the whole blackboard URL with port and trailing "/"
-    global BLACKBOARD_URL
-    BLACKBOARD_URL = BLACKBOARD_IP + ":" + DISCOVERED_PORT + "/"
+
+    blackboard_url_no_trail = BLACKBOARD_IP + ":" + DISCOVERED_PORT
+
+    blackboard_url = BLACKBOARD_URL_NO_TRAIL + "/"
+
     print("adress: " + str(addr))
+
+    return [discovered_port, blackboard_ip, blackboard_url_no_trail, blackboard_url]
 
 
 def create_group():
@@ -344,14 +355,28 @@ def election():
 
 def main():
     print("HEJEHEHEHEJEHEJEH")
-    # discovery()
-    # global DISCOVERED_IP
-    # DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
-    # print(DISCOVERED_IP)
+    # discovered_port, blackboard_ip, blackboard_url_no_trail, blackboard_url
+    discovered = discovery()
+    global DISCOVERED_PORT
+    DISCOVERED_PORT = discovered[0]
+
+    global BLACKBOARD_IP
+    BLACKBOARD_IP = discovered[1]
+
+    global BLACKBOARD_URL_NO_TRAIL
+    BLACKBOARD_URL_NO_TRAIL = discovered[2]
+
+    global BLACKBOARD_URL
+    BLACKBOARD_URL = discovered[3]
+
+    global DISCOVERED_IP
+    DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
+
+    print(DISCOVERED_IP)
     # register_at_tavern()
     # bully()
 
 main()
 
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=80)
+    app.run(debug=True, host='0.0.0.0', port=80)
