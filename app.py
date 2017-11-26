@@ -18,7 +18,8 @@ DISCOVERED_IP = ""
 # A global variable to manage the hirings
 HIRINGS = []
 LIMIT_OF_HIRINGS = 1
-GROUP_MEMBERS = [{'name': 'Arne', 'url': 'http://0.0.0.0/election'}, {'name': 'Jerom', 'url': 'http://0.0.0.0/election'}]
+GROUP_MEMBERS = [{'name': 'Arne', 'url': 'http://0.0.0.0/election'},
+                 {'name': 'Jerom', 'url': 'http://0.0.0.0/election'}]
 
 # TODO do a research on how to use URIs (or what's meant here)
 # userdata_user = "'user': '/users/Jaume',"
@@ -40,11 +41,12 @@ userdata = {'user': 'link to the registered user account',
             'messages': 'ri to which one may post messages'
             }
 
-#TODO: Daten
+
+# TODO: Daten
 def create_algorithmdata(payload_string):
     return {
         "algorithm": "bully",
-        "payload": ""+ payload_string,
+        "payload": "" + payload_string,
         "user": "http://172.19.0.3:5000/taverna/adventurers",
         "job": "JSON description of the job to do",
         "message": "something you want to tell the other one"
@@ -130,7 +132,7 @@ def hiring_endpoint():
         # check wether the hero is busy (length of HIRINGS)
         amount_of_hirings = len(HIRINGS)
         print("Amount of hirings:" + str(amount_of_hirings))
-        if amount_of_hirings >= LIMIT_OF_HIRINGS:
+        if amount_of_hirings > LIMIT_OF_HIRINGS:
             print("oO too busy!!")
             # if the hero is busy, he responds with 423-locked HTTP-Code
             too_busy_response = make_response("Sorry, I am busy", 423)
@@ -275,12 +277,7 @@ def discovery():
     return [discovered_port, blackboard_ip, blackboard_url_no_trail, blackboard_url]
 
 
-def create_group():
-    # in case of creating a group, data is empty. The hint was "watch the location header"... TODO investigate that!
-    data = ""
-    requests.post(BLACKBOARD_URL, data)
-
-    #####################Bully Algorithm########################
+# ####################Bully Algorithm########################
 
 
 def bully():
@@ -297,13 +294,12 @@ def find_members_with_higher_id():
     return stronger_members
 
 
-
 def send_election():
     # TODO: throw exception if there are no bigger ones or if nobody is answering
-    #TODO: Catch ValueError
+    # TODO: Catch ValueError
     members_to_consult = find_members_with_higher_id()
     for member in members_to_consult:
-        #TODO: Send Election Message!
+        # TODO: Send Election Message!
         # TODO: Send, raise ValueError if Member not reachable
         pass
 
@@ -318,7 +314,7 @@ def election():
     if 'election' == payload:
         print('Got election, starting own bully algorithm and responding with answer')
         algorithmdata = str(create_algorithmdata('answer'))
-        #TODO: start bully algorithm on your own
+        # TODO: start bully algorithm on your own
         return make_response(algorithmdata, 200)
     elif 'answer' == payload:
         print('Got Answer')
@@ -331,31 +327,8 @@ def election():
         return incorrect_payload_response()
 
 
-# @app.route('/hirings', methods=['POST'])
-#     def post_hiring():
-#         if request.method == 'POST':
-#             request_data = json.loads(request.data)
-#             try:
-#                 check_hiring_data(request_data)
-#
-#             except KeyError:
-#                 bad_request_response = make_response(
-#                     "The body needs to exactly contain the following keys: group, quest, "
-#                     "message", 400)
-#                 return bad_request_response
-#             # HIRINGS are stored as dicts
-#             list.append(HIRINGS, request_data)
-#             print("actual value of HIRINGS: " + str(HIRINGS))
-#             response = make_response("Hiring posted successfully", 200)
-#             return response
-#         else:
-#             print("There is only a POST allowed here.")
-#             not_allowed_response = make_response(405)
-#             return not_allowed_response
-
-
 def main():
-    print("HEJEHEHEHEJEHEJEH")
+    print("Here we go, it's Adventure-Time!")
     # discovered_port, blackboard_ip, blackboard_url_no_trail, blackboard_url
 
     global DISCOVERED_PORT
@@ -367,13 +340,14 @@ def main():
     global DISCOVERED_IP
     DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
 
-    print("Discovered_IP: " + str(DISCOVERED_PORT))
+    print("Discovered_IP: " + DISCOVERED_IP)
+    print("Discovered_Port: " + str(DISCOVERED_PORT))
     print("Blackboard_IP: " + BLACKBOARD_IP)
     print("Blackboard_URL: " + BLACKBOARD_URL)
     print("Blackboard_no_trail: " + BLACKBOARD_URL_NO_TRAIL)
-    print("Discovered_IP: " + DISCOVERED_IP)
     # register_at_tavern()
     # bully()
+
 
 main()
 
