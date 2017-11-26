@@ -3,7 +3,7 @@ import json
 import requests
 import socket
 from requests.auth import HTTPBasicAuth
-from requests.exceptions import ConnectionError, MissingSchema
+from requests.exceptions import ConnectionError, MissingSchema, InvalidURL
 
 app = Flask(__name__)
 
@@ -66,15 +66,16 @@ def hello_world():
 
 
 def join_group(group_url):
+    print(group_url)
     try:
-        requests.get(group_url, timeout=0.001)
-    except (ConnectionError, MissingSchema) as ex:
+        requests.get(group_url, timeout=0.1)
+    except (ConnectionError, MissingSchema, InvalidURL) as ex:
         print(ex)
-        print("BAD URL!")
-        return make_response("The URL given is not specified well!", 400)
+        print("THE URL " + group_url + "IS INVALID!!!")
+        return make_response("The URL given ( " + group_url + " ) is not specified well!", 400)
     reply = requests.post(group_url)
     status = reply.status_code
-    print("The status of joining the group was " + status)
+    print("The status of joining the group was " + str(status))
 
 
 def check_hiring_data(request_data):
@@ -265,9 +266,9 @@ def discovery():
 
     # assemble the whole blackboard URL with port and trailing "/"
 
-    blackboard_url_no_trail = BLACKBOARD_IP + ":" + DISCOVERED_PORT
+    blackboard_url_no_trail = str(blackboard_ip) + ":" + str(discovered_port)
 
-    blackboard_url = BLACKBOARD_URL_NO_TRAIL + "/"
+    blackboard_url = str(blackboard_url_no_trail) + "/"
 
     print("adress: " + str(addr))
 
@@ -356,23 +357,21 @@ def election():
 def main():
     print("HEJEHEHEHEJEHEJEH")
     # discovered_port, blackboard_ip, blackboard_url_no_trail, blackboard_url
-    discovered = discovery()
+
     global DISCOVERED_PORT
-    DISCOVERED_PORT = discovered[0]
-
     global BLACKBOARD_IP
-    BLACKBOARD_IP = discovered[1]
-
     global BLACKBOARD_URL_NO_TRAIL
-    BLACKBOARD_URL_NO_TRAIL = discovered[2]
-
     global BLACKBOARD_URL
-    BLACKBOARD_URL = discovered[3]
+    DISCOVERED_PORT, BLACKBOARD_IP, BLACKBOARD_URL_NO_TRAIL, BLACKBOARD_URL = discovery()
 
     global DISCOVERED_IP
     DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
 
-    print(DISCOVERED_IP)
+    print("Discovered_IP: " + str(DISCOVERED_PORT))
+    print("Blackboard_IP: " + BLACKBOARD_IP)
+    print("Blackboard_URL: " + BLACKBOARD_URL)
+    print("Blackboard_no_trail: " + BLACKBOARD_URL_NO_TRAIL)
+    print("Discovered_IP: " + DISCOVERED_IP)
     # register_at_tavern()
     # bully()
 

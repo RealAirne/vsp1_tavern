@@ -8,6 +8,10 @@ password = "Jaume"
 
 HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 
+DISCOVERED_PORT = ""
+BLACKBOARD_IP = ""
+BLACKBOARD_URL = ""
+
 
 def discovery():
     UDP_IP = ''
@@ -68,6 +72,8 @@ def extract_member_url(json_var):
     links = object_var['_links']
     member_url = links['members']
     group_url = links['self']
+    print(member_url)
+    print(group_url)
     return member_url, group_url
 
 
@@ -85,7 +91,7 @@ def main():
     # TODO find Jaume and send him an invite him (sending member_url), quest und message sind prototypen
     hiring_data = {"group": member_url, "quest": "pi", "message": "many danks"}
     # hiring_data = '{"group":' + group_url + ', "quest": "pi", "message": "many danks"}'
-    # print(json.dumps(hiring_data))
+    print(json.dumps(hiring_data))
     jaume_reply = requests.post("http://172.19.0.82:80/hirings", json.dumps(hiring_data), headers=HEADER_APPL_JSON)
     # jaume_reply = requests.post("http://172.19.0.81:80/hirings", json.dumps(hiring_data), headers=HEADER_APPL_JSON)
     jaume_status = jaume_reply.status_code
