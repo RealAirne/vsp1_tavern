@@ -89,6 +89,9 @@ def main():
     member_url, group_url = extract_member_url(reply_as_json)
 
     # TODO find Jaume and send him an invite him (sending member_url), quest und message sind prototypen
+    # TODO Tasks an die erstellte Gruppe verteilen und gelöste Quests entgegennehmen. Dort muessen dann die Token
+    # TODO extrahiert und abgegeben werden (bei der Quest Anlaufstelle)
+
     hiring_data = {"group": member_url, "quest": "pi", "message": "many danks"}
     # hiring_data = '{"group":' + group_url + ', "quest": "pi", "message": "many danks"}'
     print(json.dumps(hiring_data))

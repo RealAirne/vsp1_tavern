@@ -221,6 +221,8 @@ def assignment_endpoint():
             requests.post(callback, answer)
 
             # TODO was passiert, wenn wir eine Quest nicht abschliessen koenen?
+            # Produktiv selbst herausfinden, wie eine Task zu lösen ist.
+            # TODO
 
     else:
         return not_allowed_response()
