@@ -9,6 +9,8 @@ app = Flask(__name__)
 
 HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 
+TIMEOUTVALUE = 0.01
+
 DISCOVERED_PORT = ""
 BLACKBOARD_IP = ""
 BLACKBOARD_URL_NO_TRAIL = ""
@@ -18,8 +20,9 @@ DISCOVERED_IP = ""
 # A global variable to manage the hirings
 HIRINGS = []
 LIMIT_OF_HIRINGS = 1
-GROUP_MEMBERS = [{'name': 'Arne', 'url': 'http://0.0.0.0/election'},
-                 {'name': 'Jerom', 'url': 'http://0.0.0.0/election'}]
+member1 = {'name': 'Arne', 'url': 'http://0.0.0.1/election'}
+member2 = {'name': 'Jerom', 'url': 'http://172.19.0.79:80/election'}
+GROUP_MEMBERS = [member1, member2]
 
 # TODO do a research on how to use URIs (or what's meant here)
 # userdata_user = "'user': '/users/Jaume',"
@@ -281,50 +284,104 @@ def discovery():
 
 # ####################Bully Algorithm########################
 
-
 def bully():
-    send_election()
+    print('started bully')
+    try:
+        print('sending election 281')
+        send_election()
+    except ValueError:
+        print ('sending coordinator')
+        send_coordinator()
+    print('ended election')
 
 
 def find_members_with_higher_id():
     stronger_members = []
+    print('finding stronger members')
     for member in GROUP_MEMBERS:
         if (member['name'] > 'Jaume'):
-            stronger_members.append(member['name'])
+            stronger_members.append(member)
     if not stronger_members:
         raise ValueError('No higher Members found')
     return stronger_members
 
 
+def send_coordinator():
+    for member in GROUP_MEMBERS:
+        payload = create_algorithmdata('coordinator')
+        try:
+            print('sending coordinator to'+ member['url'])
+            requests.post(member['url'], json.dumps(payload), headers=HEADER_APPL_JSON, timeout=TIMEOUTVALUE)
+        except:
+            print('could not send coordinator')
+            pass
+
 def send_election():
-    # TODO: throw exception if there are no bigger ones or if nobody is answering
-    # TODO: Catch ValueError
+    #Throws ValueError
     members_to_consult = find_members_with_higher_id()
+    nobody_reached = True
     for member in members_to_consult:
-        # TODO: Send Election Message!
-        # TODO: Send, raise ValueError if Member not reachable
-        pass
+        print('Member to consult:')
+        print(member['url'])
+        payload = create_algorithmdata('election')
+        try:
+            print('trying to contact member')
+            urlstring = str(member['url'])
+            response = requests.post(urlstring, data=json.dumps(payload), headers=HEADER_APPL_JSON, timeout=TIMEOUTVALUE)
+
+            print('reached someone')
+            #Todo: If answer is not 'answer' then dont set nobodyreached on false
+
+            string_response = (str(response.text))
+            cleaned_string = string_response.replace("\'", "\"")
+            json_object = json.loads(cleaned_string)
+            print(json_object)
+            if json_object['payload'] == 'answer':
+                nobody_reached = False
+        except: print('could not reach member')
+    if nobody_reached:
+        print('nobody reached')
+        raise ValueError('Nobody reached')
 
 
-# response = requests.post("http://0.0.0.0:80/election", {'payload': 'election'})
+## handles start of bully AFTER sending 'answer'
+def after_this_request(func):
+    if not hasattr(g, 'call_after_request'):
+        g.call_after_request = []
+    g.call_after_request.append(func)
+    return func
+
+
+@app.after_request
+def per_request_callbacks(response):
+    for func in getattr(g, 'call_after_request', ()):
+        response = func(response)
+    return response
 
 
 @app.route('/election', methods=['POST'])
 def election():
-    data = json.loads(request.data)
+    data = request.json
+    print(data['payload'])
     payload = data['payload']
     if 'election' == payload:
         print('Got election, starting own bully algorithm and responding with answer')
         algorithmdata = str(create_algorithmdata('answer'))
-        # TODO: start bully algorithm on your own
+
+        @after_this_request
+        def start_bully(response):
+            bully()
+            return response
+        print("before bully send response")
         return make_response(algorithmdata, 200)
     elif 'answer' == payload:
         print('Got Answer')
-        return request.data
+        #TODO: nicht answer returnen, endlosschleife
+        return make_response("OK", 200)
     elif 'coordinator' == payload:
         # TODO: Remember Coordinator
         print('Got coordinator, obey the leader')
-        return request.data
+        return make_response("obeying", 200)
     else:
         return incorrect_payload_response()
 
