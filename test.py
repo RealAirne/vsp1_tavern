@@ -11,6 +11,22 @@ HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 DISCOVERED_PORT = ""
 BLACKBOARD_IP = ""
 BLACKBOARD_URL = ""
+JAUME_IP = ""
+
+
+def find_jaume_at_tavern():
+    profile_url = BLACKBOARD_URL + "taverna/adventurers/Jaume"
+    jaume_profile_response = requests.get(url=profile_url, auth=HTTPBasicAuth(username=username, password=password))
+    response_code = jaume_profile_response.status_code
+    if response_code != 200:
+        print("Sorry couldn't fetch the Profile of Jaume")
+        print("The response was:")
+        print(str(jaume_profile_response.json()))
+        return None
+    else:
+        answer_json = jaume_profile_response.json()
+        jaume_ip = answer_json['object']['url']
+        return jaume_ip
 
 
 def discovery():
@@ -41,13 +57,8 @@ def discovery():
     print("adress: " + str(addr))
     print("blackboard_url: " + str(addr))
 
-
-def create_group():
-    # in case of creating a group, data is empty. The hint was "watch the location header"...
-    # data = ""
-    group_url = "http://" + BLACKBOARD_URL + "taverna/groups"
-    reply = requests.post(url=group_url, auth=HTTPBasicAuth(username=username, password=password))
-    return reply
+    global JAUME_IP
+    JAUME_IP = find_jaume_at_tavern()
 
 
 # {
@@ -67,6 +78,14 @@ def create_group():
 # }
 
 
+def create_group():
+    # in case of creating a group, data is empty. The hint was "watch the location header"...
+    # data = ""
+    group_url = "http://" + BLACKBOARD_URL + "taverna/groups"
+    reply = requests.post(url=group_url, auth=HTTPBasicAuth(username=username, password=password))
+    return reply
+
+
 def extract_member_url(json_var):
     object_var = json_var['object'][0]
     links = object_var['_links']
@@ -75,10 +94,6 @@ def extract_member_url(json_var):
     print(member_url)
     print(group_url)
     return member_url, group_url
-
-
-def find_jaume_at_tavern():
-    pass
 
 
 def main():
@@ -96,15 +111,21 @@ def main():
     # TODO Tasks an die erstellte Gruppe verteilen und gelöste Quests entgegennehmen. Dort muessen dann die Token
     # TODO extrahiert und abgegeben werden (bei der Quest Anlaufstelle)
 
+    # Take a quest
+
     hiring_data = {"group": member_url, "quest": "pi", "message": "many danks"}
     # hiring_data = '{"group":' + group_url + ', "quest": "pi", "message": "many danks"}'
     print(json.dumps(hiring_data))
-    jaume_reply = requests.post("http://172.19.0.82:80/hirings", json.dumps(hiring_data), headers=HEADER_APPL_JSON)
+    hiring_url = JAUME_IP + "/hirings"
+    jaume_reply = requests.post(hiring_url, json.dumps(hiring_data), headers=HEADER_APPL_JSON)
     # jaume_reply = requests.post("http://172.19.0.81:80/hirings", json.dumps(hiring_data), headers=HEADER_APPL_JSON)
     jaume_status = jaume_reply.status_code
     jaume_text = jaume_reply.text
     print("Jaume Status: " + str(jaume_status))
     print(str(jaume_text))
+
+    # Devide the quest into tasks and give all members an assignment
+    # TODO /callback endpoint to receive tokens of the completed assignments
 
 
 main()

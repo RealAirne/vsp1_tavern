@@ -240,11 +240,9 @@ def get_ip():
 def register_at_tavern():
     print("register at tavern:")
     ip = get_ip()
-    # TODO endpoint jaume erstellen
-    # TODO IP eintragen in /users/Jaume
     url = ip + '/'
     json_data = {'heroclass': 'Catalonian Chiller', 'capabilities': '', 'url': '' + url}
-    taverna_url = 'http://172.19.0.3:5000/taverna/adventurers'
+    taverna_url = BLACKBOARD_URL + 'taverna/adventurers'
     response = requests.post(url=taverna_url, headers=HEADER_APPL_JSON, json=json_data,
                              auth=HTTPBasicAuth("Jaume", "Jaume"))
     print("response (register at tavern)" + repr(response.status_code))
