@@ -2,6 +2,7 @@ from flask import Flask, request, make_response
 import json
 import requests
 import socket
+import netifaces as ni
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import ConnectionError, MissingSchema, InvalidURL
 
@@ -233,7 +234,9 @@ def assignment_endpoint():
 
 # TODO dynamic IP
 def get_ip():
-    return 'http://172.19.0.63:80'
+    ni.ifaddresses('eth0')
+    ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
+    return ip
 
 
 # POST delivers heroclass, capabilities, url
