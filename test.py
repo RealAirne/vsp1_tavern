@@ -43,7 +43,7 @@ def discovery():
 
 
 def create_group():
-    # in case of creating a group, data is empty. The hint was "watch the location header"... TODO investigate that!
+    # in case of creating a group, data is empty. The hint was "watch the location header"...
     # data = ""
     group_url = "http://" + BLACKBOARD_URL + "taverna/groups"
     reply = requests.post(url=group_url, auth=HTTPBasicAuth(username=username, password=password))
@@ -75,6 +75,10 @@ def extract_member_url(json_var):
     print(member_url)
     print(group_url)
     return member_url, group_url
+
+
+def find_jaume_at_tavern():
+    pass
 
 
 def main():
