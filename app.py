@@ -1,4 +1,4 @@
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, g
 import json
 import requests
 import socket
@@ -11,6 +11,9 @@ app = Flask(__name__)
 HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 
 TIMEOUTVALUE = 0.01
+
+#Vergleiche Vorlesungsfolien ("Zeit und logische Uhren", Seite 56)
+LAMPORTCLOCK = 1
 
 DISCOVERED_PORT = ""
 BLACKBOARD_IP = ""
@@ -142,7 +145,7 @@ def hiring_endpoint():
             too_busy_response = make_response("Sorry, I am busy", 423)
             return too_busy_response
 
-        # Todo string und json beidermaßen verarbeiten (?)
+        # Todo string und json beidermassen verarbeiten (?)
         request_data = request.json
         print(str(request_data))
 
@@ -225,7 +228,7 @@ def assignment_endpoint():
             requests.post(callback, answer)
 
             # TODO was passiert, wenn wir eine Quest nicht abschliessen koenen?
-            # Produktiv selbst herausfinden, wie eine Task zu lösen ist.
+            # Produktiv selbst herausfinden, wie eine Task zu loesen ist.
             # TODO
 
     else:
@@ -377,34 +380,66 @@ def election():
         return make_response(algorithmdata, 200)
     elif 'answer' == payload:
         print('Got Answer')
-        #TODO: nicht answer returnen, endlosschleife
         return make_response("OK", 200)
     elif 'coordinator' == payload:
-        # TODO: Remember Coordinator
         print('Got coordinator, obey the leader')
         return make_response("obeying", 200)
     else:
         return incorrect_payload_response()
 
 
+##################### Distributed Mutex ############################
+
+@app.route('/mutex', methods=['POST'])
+def mutex():
+    #Before calculating calculate Lamportclock
+    data = request.json
+    othersLamport = data['time']
+    calculateNewLamport(othersLamport)
+
+    #TODO: Logic
+
+    #before answer, increase lamport (for answer)
+    increaseLamport()
+    return "OK"
+
+
+# Only tells Mutexstate, but also affects lamport-clock
+@app.route('/mutexstate', methods=['GET'])
+def mutexstate():
+    #TODO: Return current state, without increasing Lamportclock etc
+    pass
+
+def increaseLamport():
+    global LAMPORTCLOCK
+    LAMPORTCLOCK += 1
+    print("LamportClock increased: " + str(LAMPORTCLOCK))
+
+
+def calculateNewLamport(othersLamport):
+    global LAMPORTCLOCK
+    newLamport = max([LAMPORTCLOCK, othersLamport]) + 1
+    LAMPORTCLOCK = newLamport
+    print("LamportClock calculated: "+ str(LAMPORTCLOCK))
+
+
 def main():
     print("Here we go, it's Adventure-Time!")
     # discovered_port, blackboard_ip, blackboard_url_no_trail, blackboard_url
-
-    global DISCOVERED_PORT
-    global BLACKBOARD_IP
-    global BLACKBOARD_URL_NO_TRAIL
-    global BLACKBOARD_URL
-    DISCOVERED_PORT, BLACKBOARD_IP, BLACKBOARD_URL_NO_TRAIL, BLACKBOARD_URL = discovery()
-
-    global DISCOVERED_IP
-    DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
-
-    print("Discovered_IP: " + DISCOVERED_IP)
-    print("Discovered_Port: " + str(DISCOVERED_PORT))
-    print("Blackboard_IP: " + BLACKBOARD_IP)
-    print("Blackboard_URL: " + BLACKBOARD_URL)
-    print("Blackboard_no_trail: " + BLACKBOARD_URL_NO_TRAIL)
+    # global DISCOVERED_PORT
+    # global BLACKBOARD_IP
+    # global BLACKBOARD_URL_NO_TRAIL
+    # global BLACKBOARD_URL
+    # DISCOVERED_PORT, BLACKBOARD_IP, BLACKBOARD_URL_NO_TRAIL, BLACKBOARD_URL = discovery()
+    #
+    # global DISCOVERED_IP
+    # DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
+    #
+    # print("Discovered_IP: " + DISCOVERED_IP)
+    # print("Discovered_Port: " + str(DISCOVERED_PORT))
+    # print("Blackboard_IP: " + BLACKBOARD_IP)
+    # print("Blackboard_URL: " + BLACKBOARD_URL)
+    # print("Blackboard_no_trail: " + BLACKBOARD_URL_NO_TRAIL)
     # register_at_tavern()
     # bully()
 
@@ -412,4 +447,4 @@ def main():
 main()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=True, host='0.0.0.0', port=8000)

@@ -19,3 +19,7 @@ released, wanting, held
 3. Implement messages in Clients
 
 request, reply-ok
+
+4. Implement logical clock for ONLY for Lamport
+
+
