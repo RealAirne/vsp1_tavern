@@ -14,9 +14,19 @@ HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 DISCOVERED_PORT = ""
 BLACKBOARD_IP = ""
 BLACKBOARD_URL = ""
+BLACKBOARD_URL_NO_TRAILING = ""
 JAUME_IP = ""
+LOGIN_TOKEN = ""
 
 
+def get_login_token(user, passw):
+    response = requests.get(url=BLACKBOARD_URL_NO_TRAILING + '/login', auth=HTTPBasicAuth(user, passw))
+    print(response.content)
+    token = response.json()['token']
+    return token
+
+
+# TODO Testing
 def find_jaume_at_tavern():
     profile_url = BLACKBOARD_URL + "taverna/adventurers/Jaume"
     jaume_profile_response = requests.get(url=profile_url, auth=HTTPBasicAuth(username=username, password=password))
@@ -54,14 +64,20 @@ def discovery():
     global BLACKBOARD_IP
     BLACKBOARD_IP = sourceip
 
+    global BLACKBOARD_URL_NO_TRAILING
+    BLACKBOARD_URL_NO_TRAILING = str(BLACKBOARD_IP) + ":" + str(DISCOVERED_PORT)
+
     # assemble the whole blackboard URL with port and trailing "/"
     global BLACKBOARD_URL
-    BLACKBOARD_URL = str(BLACKBOARD_IP) + ":" + str(DISCOVERED_PORT) + "/"
+    BLACKBOARD_URL = BLACKBOARD_URL_NO_TRAILING + "/"
     print("adress: " + str(addr))
     print("blackboard_url: " + str(addr))
 
     global JAUME_IP
     JAUME_IP = find_jaume_at_tavern()
+
+    global LOGIN_TOKEN
+    LOGIN_TOKEN = get_login_token(username, password)
 
 
 # {
@@ -99,13 +115,6 @@ def extract_member_url(json_var):
     return member_url, group_url
 
 
-# TODO
-def take_a_quest():
-    quest_id = ""
-    taken_quest_response = ""
-    return taken_quest_response, quest_id
-
-
 def check_status_validity(taken_quest_response, quest_id):
     taken_quest_status = taken_quest_response.status_code
     if taken_quest_status >= 300:
@@ -132,6 +141,21 @@ def callback():
         return not_allowed_response()
 
 
+def get_task(user, passw):
+    response = requests.get(url=BLACKBOARD_URL + 'blackboard/tasks/2', auth=HTTPBasicAuth(user, passw))
+    print(response.content)
+    location = response.json()['object']['location']
+    resource = response.json()['object']['resource']
+    return str(location), str(resource)
+
+
+def go_to_location_and_find_host(user, passw, loc):
+    response = requests.get(url=BLACKBOARD_URL_NO_TRAILING + loc, auth=HTTPBasicAuth(user, passw))
+    print(response.content)
+    host = response.json()['object']['host']
+    return str(host)
+
+
 def main():
     discovery()
     # Create a new group
@@ -143,15 +167,10 @@ def main():
     reply_as_json = group_reply.json()
     member_url, group_url = extract_member_url(reply_as_json)
 
-    # TODO find Jaume and send him an invite (sending member_url), quest und message sind prototypen
-    # TODO Dort muessen dann die Token
-    # TODO extrahiert und abgegeben werden (bei der Quest Anlaufstelle)
+    # TODO quest und message sind prototypen
+    # TODO Dort muessen dann die Token extrahiert und abgegeben werden (bei der Quest Anlaufstelle)
 
-    # Take a quest
-    taken_quest_response, quest_id = take_a_quest()
-    check_status_validity(taken_quest_response)
-
-    hiring_data = {"group": member_url, "quest": "pi", "message": "many danks"}
+    hiring_data = {"group": member_url, "quest": 2, "message": "many danks"}
     # hiring_data = '{"group":' + group_url + ', "quest": "pi", "message": "many danks"}'
     print(json.dumps(hiring_data))
     hiring_url = JAUME_IP + "/hirings"
@@ -162,7 +181,24 @@ def main():
     print("Jaume Status: " + str(jaume_status))
     print(str(jaume_text))
 
-    # TODO Devide the quest into tasks and give all members an assignment
+    location, resource = get_task(username, password)
+    host = go_to_location_and_find_host(username, password, location)
+
+    # The quest-location needs an access token
+    quest_detection_url = host + resource
+    quest_detection_response = requests.get(quest_detection_url, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
+    print(quest_detection_response)
+    next_resource = quest_detection_response.json()['next']
+
+    quest_url = host + str(next_resource)
+    quest_response = requests.get(quest_url, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
+    quest_response_as_json = quest_response.json()
+    token_names_list = quest_response_as_json['required_tokens']
+    task_list = quest_response_as_json['steps_todo']
+
+    # TODO Alle member der Grupe herausfinden und die Tasks verteilen. Anschliessend Tokens einsammeln und bei der
+    # Quest-stelle abgeben
+
 
 
 main()

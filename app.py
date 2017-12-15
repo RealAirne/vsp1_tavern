@@ -8,7 +8,11 @@ from requests.exceptions import ConnectionError, MissingSchema, InvalidURL
 
 app = Flask(__name__)
 
+username = "Jaume"
+password = "Jaume"
+
 HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
+AUTHENTICATION_HEADER = ""
 
 TIMEOUTVALUE = 0.01
 
@@ -178,22 +182,24 @@ def take_task_and_perform(assignment_dict):
     method = assignment_dict['method']
     data = assignment_dict['data']
 
-    # TODO wie sieht eine resource aus? Annahme vollstaendige URL
+    task_url = str(task_uri) + str(resource)
+
+    # in case of the rats, its always POST
     if method in ['post', 'POST', 'Post', 'pOst', 'poSt', 'posT']:
-        post_request = requests.post(resource, data)
-        return ['post', post_request]
+        post_request = requests.post(task_url, data, headers=AUTHENTICATION_HEADER)
+        return 'post', post_request
 
     elif method in ['get', 'Get', 'GET', 'gEt', 'geT', 'GEt', 'gET', 'GeT']:
-        get_request = requests.get(resource)
-        return ['get', get_request]
+        get_request = requests.get(task_url, headers=AUTHENTICATION_HEADER)
+        return 'get', get_request
 
     elif method in ['put', 'Put', 'PUT']:
-        put_request = requests.put(resource, data)
-        return ['put', put_request]
+        put_request = requests.put(task_url, data, headers=AUTHENTICATION_HEADER)
+        return 'put', put_request
 
     elif method in ['delete', 'DELETE', 'del', 'remove', 'rm']:
-        delete_request = requests.delete(resource)
-        return ['delete', delete_request]
+        delete_request = requests.delete(task_url, headers=AUTHENTICATION_HEADER)
+        return 'delete', delete_request
 
 
 def assemble_json_answer(id, task, resource, method, data, user, message):
@@ -215,7 +221,9 @@ def assignment_endpoint():
         task = request_data['task']
         resource = request_data['resource']
         callback = request_data['callback']
-        message_text = "Ye boiii, we did it!"
+        message_text = request_data['message']
+
+        reply_text = "ye boiii"
 
         # After pre-checks are completed, the hero can take the task
         method_used, reply = take_task_and_perform(request_data)
@@ -223,7 +231,7 @@ def assignment_endpoint():
         # Was the quest succesful?
         if status in range(start=200, stop=299, step=1):
             jaume = BLACKBOARD_URL + 'users/Jaume'
-            answer = assemble_json_answer(received_id, task, resource, method_used, reply, jaume, message_text)
+            answer = assemble_json_answer(received_id, task, resource, method_used, reply, jaume, reply_text)
             requests.post(callback, answer)
 
             # TODO was passiert, wenn wir eine Quest nicht abschliessen koenen?
@@ -234,7 +242,6 @@ def assignment_endpoint():
         return not_allowed_response()
 
 
-# TODO dynamic IP
 def get_ip():
     ni.ifaddresses('eth0')
     ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
@@ -253,6 +260,12 @@ def register_at_tavern():
     print("response (register at tavern)" + repr(response.status_code))
     print("hello")
 
+
+def get_login_token(user, passw):
+    response = requests.get(url=BLACKBOARD_URL_NO_TRAIL + '/login', auth=HTTPBasicAuth(user, passw))
+    print(response.content)
+    token = response.json()['token']
+    return token
 
 def discovery():
     UDP_IP = ''
@@ -282,7 +295,11 @@ def discovery():
 
     print("adress: " + str(addr))
 
-    return [discovered_port, blackboard_ip, blackboard_url_no_trail, blackboard_url]
+    authentication_token = get_login_token(username, password)
+
+    authentication_header = {'Authorization': 'Token ' + authentication_token}
+
+    return discovered_port, blackboard_ip, blackboard_url_no_trail, blackboard_url, authentication_header
 
 
 # ####################Bully Algorithm########################
@@ -424,23 +441,23 @@ def calculateNewLamport(othersLamport):
 
 def main():
     print("Here we go, it's Adventure-Time!")
-    # discovered_port, blackboard_ip, blackboard_url_no_trail, blackboard_url
-    # global DISCOVERED_PORT
-    # global BLACKBOARD_IP
-    # global BLACKBOARD_URL_NO_TRAIL
-    # global BLACKBOARD_URL
-    # DISCOVERED_PORT, BLACKBOARD_IP, BLACKBOARD_URL_NO_TRAIL, BLACKBOARD_URL = discovery()
-    #
-    # global DISCOVERED_IP
-    # DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
-    #
-    # print("Discovered_IP: " + DISCOVERED_IP)
-    # print("Discovered_Port: " + str(DISCOVERED_PORT))
-    # print("Blackboard_IP: " + BLACKBOARD_IP)
-    # print("Blackboard_URL: " + BLACKBOARD_URL)
-    # print("Blackboard_no_trail: " + BLACKBOARD_URL_NO_TRAIL)
-    # register_at_tavern()
-    # bully()
+    global DISCOVERED_PORT
+    global BLACKBOARD_IP
+    global BLACKBOARD_URL_NO_TRAIL
+    global BLACKBOARD_URL
+    global AUTHENTICATION_HEADER
+    DISCOVERED_PORT, BLACKBOARD_IP, BLACKBOARD_URL_NO_TRAIL, BLACKBOARD_URL, AUTHENTICATION_HEADER = discovery()
+
+    global DISCOVERED_IP
+    DISCOVERED_IP = 'http://' + str(BLACKBOARD_IP) + ':' + str(DISCOVERED_PORT)
+
+    print("Discovered_IP: " + DISCOVERED_IP)
+    print("Discovered_Port: " + str(DISCOVERED_PORT))
+    print("Blackboard_IP: " + BLACKBOARD_IP)
+    print("Blackboard_URL: " + BLACKBOARD_URL)
+    print("Blackboard_no_trail: " + BLACKBOARD_URL_NO_TRAIL)
+    register_at_tavern()
+    bully()
 
 
 main()
