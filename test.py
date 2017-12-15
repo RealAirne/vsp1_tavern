@@ -134,7 +134,7 @@ def not_allowed_response():
 @app.route('/callback', methods=['POST'])
 def callback():
     if request.method == 'POST':
-        # TODO
+        # TODO Annahme aller quest-tokens und speichern in einer globalen variable?
         # { id: ; task; resource; method; data; user; message}
         pass
     else:
@@ -197,7 +197,7 @@ def main():
     task_list = quest_response_as_json['steps_todo']
 
     # TODO Alle member der Grupe herausfinden und die Tasks verteilen. Anschliessend Tokens einsammeln und bei der
-    # Quest-stelle abgeben
+    # TODO Quest-stelle abgeben. Dabei muss darauf gewartet werden, dass alle questtokens eintreffen (callback)
 
 
 
