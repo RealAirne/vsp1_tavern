@@ -2,6 +2,9 @@ import json
 import socket
 import requests
 from requests.auth import HTTPBasicAuth
+from flask import Flask, request, make_response
+
+app = Flask(__name__)
 
 username = "Jaume"
 password = "Jaume"
@@ -96,6 +99,39 @@ def extract_member_url(json_var):
     return member_url, group_url
 
 
+# TODO
+def take_a_quest():
+    quest_id = ""
+    taken_quest_response = ""
+    return taken_quest_response, quest_id
+
+
+def check_status_validity(taken_quest_response, quest_id):
+    taken_quest_status = taken_quest_response.status_code
+    if taken_quest_status >= 300:
+        print("Couldn't take the quest with id " + str(quest_id) + "!!")
+        print("The result was: ")
+        print(taken_quest_response.json())
+    else:
+        print("Quest with the id " + quest_id + " taken!")
+
+
+def not_allowed_response():
+    print("There is only a POST allowed here.")
+    not_allowed_response = make_response(405)
+    return not_allowed_response
+
+
+@app.route('/callback', methods=['POST'])
+def callback():
+    if request.method == 'POST':
+        # TODO
+        # { id: ; task; resource; method; data; user; message}
+        pass
+    else:
+        return not_allowed_response()
+
+
 def main():
     discovery()
     # Create a new group
@@ -108,10 +144,12 @@ def main():
     member_url, group_url = extract_member_url(reply_as_json)
 
     # TODO find Jaume and send him an invite (sending member_url), quest und message sind prototypen
-    # TODO Tasks an die erstellte Gruppe verteilen und gelöste Quests entgegennehmen. Dort muessen dann die Token
+    # TODO Dort muessen dann die Token
     # TODO extrahiert und abgegeben werden (bei der Quest Anlaufstelle)
 
     # Take a quest
+    taken_quest_response, quest_id = take_a_quest()
+    check_status_validity(taken_quest_response)
 
     hiring_data = {"group": member_url, "quest": "pi", "message": "many danks"}
     # hiring_data = '{"group":' + group_url + ', "quest": "pi", "message": "many danks"}'
@@ -124,8 +162,7 @@ def main():
     print("Jaume Status: " + str(jaume_status))
     print(str(jaume_text))
 
-    # Devide the quest into tasks and give all members an assignment
-    # TODO /callback endpoint to receive tokens of the completed assignments
+    # TODO Devide the quest into tasks and give all members an assignment
 
 
 main()

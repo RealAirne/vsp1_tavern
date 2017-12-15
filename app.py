@@ -28,7 +28,6 @@ member1 = {'name': 'Arne', 'url': 'http://0.0.0.1/election'}
 member2 = {'name': 'Jerom', 'url': 'http://172.19.0.79:80/election'}
 GROUP_MEMBERS = [member1, member2]
 
-# TODO do a research on how to use URIs (or what's meant here)
 # userdata_user = "'user': '/users/Jaume',"
 # userdata_idle = "'idle': False,"
 # userdata_group = "'group': None,"
@@ -171,7 +170,7 @@ def hiring_endpoint():
         return not_allowed_response()
 
 
-# TODO only can perform tasks, if the method is already known
+# TODO only can perform tasks, if the method is already known --> Add Regex to filter operation at the quest-loc
 # TODO how about authentication?
 def take_task_and_perform(assignment_dict):
     task_uri = assignment_dict['task']
