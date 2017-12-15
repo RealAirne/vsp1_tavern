@@ -235,7 +235,6 @@ def assignment_endpoint():
         return not_allowed_response()
 
 
-# TODO dynamic IP
 def get_ip():
     ni.ifaddresses('eth0')
     ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
@@ -334,7 +333,6 @@ def send_election():
             response = requests.post(urlstring, data=json.dumps(payload), headers=HEADER_APPL_JSON, timeout=TIMEOUTVALUE)
 
             print('reached someone')
-            #Todo: If answer is not 'answer' then dont set nobodyreached on false
 
             string_response = (str(response.text))
             cleaned_string = string_response.replace("\'", "\"")
