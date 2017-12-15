@@ -408,6 +408,7 @@ def mutex():
 @app.route('/mutexstate', methods=['GET'])
 def mutexstate():
     #TODO: Return current state, without increasing Lamportclock etc
+    #TODO: FIRST
     pass
 
 def increaseLamport():
