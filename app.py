@@ -13,6 +13,7 @@ HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 TIMEOUTVALUE = 0.01
 
 #Vergleiche Vorlesungsfolien ("Zeit und logische Uhren", Seite 56)
+#TODO: g als global Variable über Threads hinweg?
 LAMPORTCLOCK = 1
 
 DISCOVERED_PORT = ""
@@ -445,4 +446,4 @@ def main():
 main()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    app.run(debug=True, host='0.0.0.0', port=8000, threaded=True)
