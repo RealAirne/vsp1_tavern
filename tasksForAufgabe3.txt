@@ -1,0 +1,25 @@
+1. new return on get /
+
+{
+"user":"<link to the registered user account>",
+"idle": <boolean, if you have no assignment currently>,
+"group": "<url to the group you are in>",
+"hirings": "<uri to which one may post to hire you for a group>", 
+"assignments": "<uri to which one may post an assignment", 
+"messages": "<uri to which one may post messages>",
+"election": "<uri to which one sends election messages to>",
+------>"mutex": "<uri to endpoint where one posts mutex algorithm messages>", 
+------>"mutexstate": "<uri to endpoint telling the mutex state>"
+}
+
+2. Implement states in Clients
+
+released, wanting, held
+
+3. Implement messages in Clients
+
+request, reply-ok
+
+4. Implement logical clock for ONLY for Lamport
+
+
