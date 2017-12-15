@@ -17,6 +17,7 @@ AUTHENTICATION_HEADER = ""
 TIMEOUTVALUE = 0.01
 
 #Vergleiche Vorlesungsfolien ("Zeit und logische Uhren", Seite 56)
+#TODO: g als global Variable über Threads hinweg?
 LAMPORTCLOCK = 1
 
 DISCOVERED_PORT = ""
@@ -350,7 +351,6 @@ def send_election():
             response = requests.post(urlstring, data=json.dumps(payload), headers=HEADER_APPL_JSON, timeout=TIMEOUTVALUE)
 
             print('reached someone')
-            #Todo: If answer is not 'answer' then dont set nobodyreached on false
 
             string_response = (str(response.text))
             cleaned_string = string_response.replace("\'", "\"")
@@ -424,6 +424,7 @@ def mutex():
 @app.route('/mutexstate', methods=['GET'])
 def mutexstate():
     #TODO: Return current state, without increasing Lamportclock etc
+    #TODO: FIRST
     pass
 
 def increaseLamport():
@@ -463,4 +464,4 @@ def main():
 main()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    app.run(debug=True, host='0.0.0.0', port=8000, threaded=True)
