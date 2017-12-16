@@ -262,8 +262,8 @@ def register_at_tavern():
     print("hello")
 
 
-def get_login_token(user, passw):
-    response = requests.get(url=BLACKBOARD_URL_NO_TRAIL + '/login', auth=HTTPBasicAuth(user, passw))
+def get_login_token(user, passw, blackboard_url):
+    response = requests.get(url=blackboard_url + '/login', auth=HTTPBasicAuth(user, passw))
     print(response.content)
     token = response.json()['token']
     return token
@@ -297,7 +297,7 @@ def discovery():
 
     print("adress: " + str(addr))
 
-    authentication_token = get_login_token(username, password)
+    authentication_token = get_login_token(username, password, blackboard_url_no_trail)
 
     authentication_header = {'Authorization': 'Token ' + authentication_token}
 

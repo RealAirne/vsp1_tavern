@@ -78,7 +78,7 @@ def discovery():
     print("blackboard_url: " + str(addr))
 
     global JAUME_IP
-    JAUME_IP = find_user_at_tavern()
+    JAUME_IP = find_user_at_tavern("Jaume")
 
     global LOGIN_TOKEN
     LOGIN_TOKEN = get_login_token(username, password)
