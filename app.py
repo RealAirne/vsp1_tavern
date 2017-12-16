@@ -263,7 +263,7 @@ def register_at_tavern():
 
 
 def get_login_token(user, passw, blackboard_url):
-    response = requests.get(url=blackboard_url + '/login', auth=HTTPBasicAuth(user, passw))
+    response = requests.get(url="http://" + blackboard_url + '/login', auth=HTTPBasicAuth(user, passw))
     print(response.content)
     token = response.json()['token']
     return token

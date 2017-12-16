@@ -32,7 +32,7 @@ def get_login_token(user, passw):
 
 # TODO Testing and find usages
 def find_user_at_tavern(name):
-    profile_url = BLACKBOARD_URL + "taverna/adventurers/" + str(name)
+    profile_url = "http://" + BLACKBOARD_URL + "taverna/adventurers/" + str(name)
     user_profile_response = requests.get(url=profile_url, auth=HTTPBasicAuth(username=username, password=password))
     response_code = user_profile_response.status_code
     if response_code != 200:
