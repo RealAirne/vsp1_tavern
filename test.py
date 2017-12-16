@@ -185,15 +185,17 @@ def send_tasks_to_group(group_url, task_list, host_ip):
     task_count = len(task_list)
     counter = 0
     print("starting round robin with task_count: " + str(task_count) + " and counter: " + str(counter))
-    while counter <= task_count:
+    while counter < task_count:
         for member in member_list:
             member_ip = find_user_at_tavern(member)
             member_url = str(member_ip) + "/assignments"
             task_resource = task_list[counter]
             # NONE oder empty string?
             assignment = {"id": counter, "task": host_ip, "resource": task_resource, "method": "post", "data": ""}
+            print("asignment is: " + str(assignment))
             post_response = requests.post(member_url, json.dumps(assignment))
             check_status_validity(taken_quest_response=post_response, quest_id=QUEST_ID)
+            print("sending task no " + str(counter) + " accomplished...")
     print("completed round robin with task_count: " + str(task_count) + " and counter: " + str(counter))
 
 
