@@ -16,8 +16,8 @@ AUTHENTICATION_HEADER = ""
 
 TIMEOUTVALUE = 0.01
 
-#Vergleiche Vorlesungsfolien ("Zeit und logische Uhren", Seite 56)
-#TODO: g als global Variable über Threads hinweg?
+# Vergleiche Vorlesungsfolien ("Zeit und logische Uhren", Seite 56)
+# TODO: g als global Variable über Threads hinweg?
 LAMPORTCLOCK = 1
 
 DISCOVERED_PORT = ""
@@ -268,6 +268,7 @@ def get_login_token(user, passw):
     token = response.json()['token']
     return token
 
+
 def discovery():
     UDP_IP = ''
     UDP_PORT = 24000
@@ -311,7 +312,7 @@ def bully():
         print('sending election 281')
         send_election()
     except ValueError:
-        print ('sending coordinator')
+        print('sending coordinator')
         send_coordinator()
     print('ended election')
 
@@ -331,14 +332,15 @@ def send_coordinator():
     for member in GROUP_MEMBERS:
         payload = create_algorithmdata('coordinator')
         try:
-            print('sending coordinator to'+ member['url'])
+            print('sending coordinator to' + member['url'])
             requests.post(member['url'], json.dumps(payload), headers=HEADER_APPL_JSON, timeout=TIMEOUTVALUE)
         except:
             print('could not send coordinator')
             pass
 
+
 def send_election():
-    #Throws ValueError
+    # Throws ValueError
     members_to_consult = find_members_with_higher_id()
     nobody_reached = True
     for member in members_to_consult:
@@ -348,7 +350,8 @@ def send_election():
         try:
             print('trying to contact member')
             urlstring = str(member['url'])
-            response = requests.post(urlstring, data=json.dumps(payload), headers=HEADER_APPL_JSON, timeout=TIMEOUTVALUE)
+            response = requests.post(urlstring, data=json.dumps(payload), headers=HEADER_APPL_JSON,
+                                     timeout=TIMEOUTVALUE)
 
             print('reached someone')
 
@@ -358,7 +361,8 @@ def send_election():
             print(json_object)
             if json_object['payload'] == 'answer':
                 nobody_reached = False
-        except: print('could not reach member')
+        except:
+            print('could not reach member')
     if nobody_reached:
         print('nobody reached')
         raise ValueError('Nobody reached')
@@ -392,6 +396,7 @@ def election():
         def start_bully(response):
             bully()
             return response
+
         print("before bully send response")
         return make_response(algorithmdata, 200)
     elif 'answer' == payload:
@@ -408,14 +413,14 @@ def election():
 
 @app.route('/mutex', methods=['POST'])
 def mutex():
-    #Before calculating calculate Lamportclock
+    # Before calculating calculate Lamportclock
     data = request.json
     othersLamport = data['time']
     calculateNewLamport(othersLamport)
 
-    #TODO: Logic
+    # TODO: Logic
 
-    #before answer, increase lamport (for answer)
+    # before answer, increase lamport (for answer)
     increaseLamport()
     return "OK"
 
@@ -423,9 +428,10 @@ def mutex():
 # Only tells Mutexstate, but also affects lamport-clock
 @app.route('/mutexstate', methods=['GET'])
 def mutexstate():
-    #TODO: Return current state, without increasing Lamportclock etc
-    #TODO: FIRST
+    # TODO: Return current state, without increasing Lamportclock etc
+    # TODO: FIRST
     pass
+
 
 def increaseLamport():
     global LAMPORTCLOCK
@@ -437,7 +443,7 @@ def calculateNewLamport(othersLamport):
     global LAMPORTCLOCK
     newLamport = max([LAMPORTCLOCK, othersLamport]) + 1
     LAMPORTCLOCK = newLamport
-    print("LamportClock calculated: "+ str(LAMPORTCLOCK))
+    print("LamportClock calculated: " + str(LAMPORTCLOCK))
 
 
 def main():
@@ -458,7 +464,7 @@ def main():
     print("Blackboard_URL: " + BLACKBOARD_URL)
     print("Blackboard_no_trail: " + BLACKBOARD_URL_NO_TRAIL)
     register_at_tavern()
-    bully()
+    # bully()
 
 
 main()

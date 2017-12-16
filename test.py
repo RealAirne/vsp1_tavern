@@ -1,6 +1,7 @@
 import json
 import socket
 import requests
+import time
 from requests.auth import HTTPBasicAuth
 from flask import Flask, request, make_response
 
@@ -18,6 +19,9 @@ BLACKBOARD_URL_NO_TRAILING = ""
 JAUME_IP = ""
 LOGIN_TOKEN = ""
 
+TOKENS_RECEIVED = 0
+TOKEN_SAVE = []
+
 
 def get_login_token(user, passw):
     response = requests.get(url=BLACKBOARD_URL_NO_TRAILING + '/login', auth=HTTPBasicAuth(user, passw))
@@ -26,20 +30,20 @@ def get_login_token(user, passw):
     return token
 
 
-# TODO Testing
-def find_jaume_at_tavern():
-    profile_url = BLACKBOARD_URL + "taverna/adventurers/Jaume"
-    jaume_profile_response = requests.get(url=profile_url, auth=HTTPBasicAuth(username=username, password=password))
-    response_code = jaume_profile_response.status_code
+# TODO Testing and find usages
+def find_user_at_tavern(name):
+    profile_url = BLACKBOARD_URL + "taverna/adventurers/" + str(name)
+    user_profile_response = requests.get(url=profile_url, auth=HTTPBasicAuth(username=username, password=password))
+    response_code = user_profile_response.status_code
     if response_code != 200:
-        print("Sorry couldn't fetch the Profile of Jaume")
+        print("Sorry couldn't fetch the Profile of " + str(name))
         print("The response was:")
-        print(str(jaume_profile_response.json()))
+        print(str(user_profile_response.json()))
         return None
     else:
-        answer_json = jaume_profile_response.json()
-        jaume_ip = answer_json['object']['url']
-        return jaume_ip
+        answer_json = user_profile_response.json()
+        user_ip = answer_json['object']['url']
+        return user_ip
 
 
 def discovery():
@@ -74,7 +78,7 @@ def discovery():
     print("blackboard_url: " + str(addr))
 
     global JAUME_IP
-    JAUME_IP = find_jaume_at_tavern()
+    JAUME_IP = find_user_at_tavern()
 
     global LOGIN_TOKEN
     LOGIN_TOKEN = get_login_token(username, password)
@@ -134,26 +138,66 @@ def not_allowed_response():
 @app.route('/callback', methods=['POST'])
 def callback():
     if request.method == 'POST':
-        # TODO Annahme aller quest-tokens und speichern in einer globalen variable?
         # { id: ; task; resource; method; data; user; message}
-        pass
+        request_data = request.json
+        print("RECEIVED A CALLBACK!!")
+        print(request_data)
+        token = request_data['data']['token']
+        global TOKEN_SAVE
+        TOKEN_SAVE = TOKEN_SAVE.append(token)
+        print("Current TOKEN_SAVE looks like this: " + repr(TOKEN_SAVE))
     else:
         return not_allowed_response()
 
 
-def get_task(user, passw):
-    response = requests.get(url=BLACKBOARD_URL + 'blackboard/tasks/2', auth=HTTPBasicAuth(user, passw))
+def get_task():
+    response = requests.get(url=BLACKBOARD_URL + 'blackboard/tasks/2', auth=HTTPBasicAuth(username, password))
     print(response.content)
     location = response.json()['object']['location']
     resource = response.json()['object']['resource']
     return str(location), str(resource)
 
 
-def go_to_location_and_find_host(user, passw, loc):
-    response = requests.get(url=BLACKBOARD_URL_NO_TRAILING + loc, auth=HTTPBasicAuth(user, passw))
+# TODO find usages and remove unnecessary params
+def go_to_location_and_find_host(loc):
+    response = requests.get(url=BLACKBOARD_URL_NO_TRAILING + loc, auth=HTTPBasicAuth(username, password))
     print(response.content)
     host = response.json()['object']['host']
     return str(host)
+
+
+def send_tasks_to_group(group_url, task_list, host_ip):
+    response = requests.get(group_url, auth=HTTPBasicAuth(username, password))
+    response_as_json = response.json()
+    member_list = response_as_json['object']['members']
+    # implementing round robin
+    task_count = len(task_list)
+    counter = 0
+    print("starting round robin with task_count: " + str(task_count) + " and counter: " + str(counter))
+    while counter <= task_count:
+        for member in member_list:
+            member_ip = find_user_at_tavern(member)
+            member_url = str(member_ip) + "/assignments"
+            task_resource = task_list[task_count]
+            # NONE oder empty string?
+            assignment = {"id": counter, "task": host_ip, "resource": task_resource, "method": "post", "data": ""}
+            post_response = requests.post(member_url, json.dumps(assignment))
+            check_status_validity(post_response.status_code)
+    print("completed round robin with task_count: " + str(task_count) + " and counter: " + str(counter))
+
+
+def wait_for_tokens(task_count):
+    while TOKENS_RECEIVED < task_count:
+        print("Received " + str(TOKENS_RECEIVED) + "/" + str(task_count) + "tokens, sleeping some and retrying then...")
+        time.sleep(3)
+
+
+def accomplish_quest(quest_detection_url):
+    accomplish_string = {"tokens": TOKEN_SAVE}
+    accomplish_data = json.dumps(accomplish_string)
+    accomplish_response = requests.post(quest_detection_url, accomplish_data, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
+    print("accomplished quest?")
+    print(str(accomplish_response.status_code) + ", " + accomplish_response.json())
 
 
 def main():
@@ -167,9 +211,6 @@ def main():
     reply_as_json = group_reply.json()
     member_url, group_url = extract_member_url(reply_as_json)
 
-    # TODO quest und message sind prototypen
-    # TODO Dort muessen dann die Token extrahiert und abgegeben werden (bei der Quest Anlaufstelle)
-
     hiring_data = {"group": member_url, "quest": 2, "message": "many danks"}
     # hiring_data = '{"group":' + group_url + ', "quest": "pi", "message": "many danks"}'
     print(json.dumps(hiring_data))
@@ -181,8 +222,8 @@ def main():
     print("Jaume Status: " + str(jaume_status))
     print(str(jaume_text))
 
-    location, resource = get_task(username, password)
-    host = go_to_location_and_find_host(username, password, location)
+    location, resource = get_task()
+    host = go_to_location_and_find_host(location)
 
     # The quest-location needs an access token
     quest_detection_url = host + resource
@@ -193,12 +234,14 @@ def main():
     quest_url = host + str(next_resource)
     quest_response = requests.get(quest_url, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
     quest_response_as_json = quest_response.json()
-    token_names_list = quest_response_as_json['required_tokens']
     task_list = quest_response_as_json['steps_todo']
+    task_count = len(task_list)
 
-    # TODO Alle member der Grupe herausfinden und die Tasks verteilen. Anschliessend Tokens einsammeln und bei der
-    # TODO Quest-stelle abgeben. Dabei muss darauf gewartet werden, dass alle questtokens eintreffen (callback)
+    send_tasks_to_group(group_url=group_url, task_list=task_list, host_ip=host)
 
+    wait_for_tokens(task_count)
+
+    accomplish_quest(quest_detection_url)
 
 
 main()
