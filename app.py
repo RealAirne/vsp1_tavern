@@ -12,9 +12,20 @@ HEADER_APPL_JSON = {'content-type': 'application/json; charset=UTF-8'}
 
 TIMEOUTVALUE = 0.01
 
-#Vergleiche Vorlesungsfolien ("Zeit und logische Uhren", Seite 56)
-#TODO: g als global Variable über Threads hinweg?
+# Vergleiche Vorlesungsfolien ("Zeit und logische Uhren", Seite 56)
+# TODO: g als global Variable über Threads hinweg?
 LAMPORTCLOCK = 1
+
+RELEASED = "released"
+WANTING = "wanting"
+HELD = "held"
+
+STATE = RELEASED
+
+REQUEST = "request"
+REPLYOK = "reply-ok"
+
+REPLYOKCOUNT = 0
 
 DISCOVERED_PORT = ""
 BLACKBOARD_IP = ""
@@ -293,7 +304,7 @@ def bully():
         print('sending election 281')
         send_election()
     except ValueError:
-        print ('sending coordinator')
+        print('sending coordinator')
         send_coordinator()
     print('ended election')
 
@@ -313,14 +324,15 @@ def send_coordinator():
     for member in GROUP_MEMBERS:
         payload = create_algorithmdata('coordinator')
         try:
-            print('sending coordinator to'+ member['url'])
+            print('sending coordinator to' + member['url'])
             requests.post(member['url'], json.dumps(payload), headers=HEADER_APPL_JSON, timeout=TIMEOUTVALUE)
         except:
             print('could not send coordinator')
             pass
 
+
 def send_election():
-    #Throws ValueError
+    # Throws ValueError
     members_to_consult = find_members_with_higher_id()
     nobody_reached = True
     for member in members_to_consult:
@@ -330,7 +342,8 @@ def send_election():
         try:
             print('trying to contact member')
             urlstring = str(member['url'])
-            response = requests.post(urlstring, data=json.dumps(payload), headers=HEADER_APPL_JSON, timeout=TIMEOUTVALUE)
+            response = requests.post(urlstring, data=json.dumps(payload), headers=HEADER_APPL_JSON,
+                                     timeout=TIMEOUTVALUE)
 
             print('reached someone')
 
@@ -340,7 +353,8 @@ def send_election():
             print(json_object)
             if json_object['payload'] == 'answer':
                 nobody_reached = False
-        except: print('could not reach member')
+        except:
+            print('could not reach member')
     if nobody_reached:
         print('nobody reached')
         raise ValueError('Nobody reached')
@@ -374,6 +388,7 @@ def election():
         def start_bully(response):
             bully()
             return response
+
         print("before bully send response")
         return make_response(algorithmdata, 200)
     elif 'answer' == payload:
@@ -390,24 +405,54 @@ def election():
 
 @app.route('/mutex', methods=['POST'])
 def mutex():
-    #Before calculating calculate Lamportclock
+    # Before calculating calculate Lamportclock
     data = request.json
     othersLamport = data['time']
     calculateNewLamport(othersLamport)
 
-    #TODO: Logic
+    # TODO: Logic
+    message = data['message']
+    if message == REPLYOK:
+        if STATE == WANTING:
+            # TODO: process
+            calculate_reply_ok_count()
+            claim_mutex_if_save()
+            pass
+        else:
+            pass
+    elif message == REQUEST:
+        if STATE == RELEASED:
+            # TODO: send reply ok
+            pass
+        elif STATE == HELD:
+            # TODO: store request somehow (queue?)
+            pass
+        elif STATE == WANTING:
+            # TODO: store depending on lamportclock
+            pass
+        pass
 
-    #before answer, increase lamport (for answer)
+    # before answer, increase lamport (for answer)
     increaseLamport()
     return "OK"
+
+
+def calculate_reply_ok_count():
+    # TODO
+    pass
+
+
+def claim_mutex_if_save():
+    # TODO
+    pass
 
 
 # Only tells Mutexstate, but also affects lamport-clock
 @app.route('/mutexstate', methods=['GET'])
 def mutexstate():
-    #TODO: Return current state, without increasing Lamportclock etc
-    #TODO: FIRST
-    pass
+    jsonResponse = json.dumps({'state': STATE, 'time': LAMPORTCLOCK})
+    return make_response(jsonResponse, 200)
+
 
 def increaseLamport():
     global LAMPORTCLOCK
@@ -419,7 +464,31 @@ def calculateNewLamport(othersLamport):
     global LAMPORTCLOCK
     newLamport = max([LAMPORTCLOCK, othersLamport]) + 1
     LAMPORTCLOCK = newLamport
-    print("LamportClock calculated: "+ str(LAMPORTCLOCK))
+    print("LamportClock calculated: " + str(LAMPORTCLOCK))
+
+
+def request_mutex():
+    #TODO: auslagern in 3 Threads, jeder Thread wartet auf ok und feuert dann signal zum betreten
+    #TODO: koennte mit threaded = true kollidieren
+    if not STATE == HELD:
+        change_state(WANTING)
+        for member in GROUP_MEMBERS:
+            url = member['url']
+            payload = create_request_payload(url)
+            requests.post(url, payload)
+    pass
+
+
+def create_request_payload(url):
+    # TODO: maybe str(url)
+    # TODO: reply == own url
+    payload = json.dumps({'message': 'request', 'url': url, 'reply': get_ip() + '/mutex'})
+    return payload
+
+
+def change_state(state):
+    if not STATE == HELD:
+        STATE == state
 
 
 def main():
