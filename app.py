@@ -263,7 +263,7 @@ def register_at_tavern():
 
 
 def get_login_token(user, passw, blackboard_url):
-    response = requests.get(url="http://" + blackboard_url + '/login', auth=HTTPBasicAuth(user, passw))
+    response = requests.get(url=blackboard_url + '/login', auth=HTTPBasicAuth(user, passw))
     print(response.content)
     token = response.json()['token']
     return token
@@ -291,9 +291,9 @@ def discovery():
 
     # assemble the whole blackboard URL with port and trailing "/"
 
-    blackboard_url_no_trail = str(blackboard_ip) + ":" + str(discovered_port)
+    blackboard_url_no_trail = "http://" + str(blackboard_ip) + ":" + str(discovered_port)
 
-    blackboard_url = str(blackboard_url_no_trail) + "/"
+    blackboard_url = "http://" + str(blackboard_url_no_trail) + "/"
 
     print("adress: " + str(addr))
 
