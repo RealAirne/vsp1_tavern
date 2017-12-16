@@ -7,6 +7,7 @@ from requests.auth import HTTPBasicAuth
 from requests.exceptions import ConnectionError, MissingSchema, InvalidURL
 
 app = Flask(__name__)
+APPL_PORT = 8000
 
 username = "Jaume"
 password = "Jaume"
@@ -160,7 +161,7 @@ def hiring_endpoint():
             return bad_request_response("group, quest, message")
 
         print("check completed!")
-        url_to_join = "http://" + str(BLACKBOARD_URL_NO_TRAIL) + request_data['group']
+        url_to_join = str(BLACKBOARD_URL_NO_TRAIL) + request_data['group']
         print(url_to_join)
         joined_group = join_group(url_to_join)
         if joined_group is not None:
@@ -246,14 +247,16 @@ def assignment_endpoint():
 def get_ip():
     ni.ifaddresses('eth0')
     ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
-    return ip
+    ip_with_port = str(ip) + ":" + str(APPL_PORT)
+    print("FOUND MY OWN IP: " + str(ip_with_port))
+    return ip_with_port
 
 
 # POST delivers heroclass, capabilities, url
 def register_at_tavern():
     print("register at tavern:")
     ip = get_ip()
-    url = ip + '/'
+    url = "http://" + ip + '/'
     json_data = {'heroclass': 'Catalonian Chiller', 'capabilities': '', 'url': '' + url}
     taverna_url = BLACKBOARD_URL + 'taverna/adventurers'
     response = requests.post(url=taverna_url, headers=HEADER_APPL_JSON, json=json_data,
@@ -293,7 +296,7 @@ def discovery():
 
     blackboard_url_no_trail = "http://" + str(blackboard_ip) + ":" + str(discovered_port)
 
-    blackboard_url = "http://" + str(blackboard_url_no_trail) + "/"
+    blackboard_url = str(blackboard_url_no_trail) + "/"
 
     print("adress: " + str(addr))
 
@@ -470,4 +473,4 @@ def main():
 main()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000, threaded=True)
+    app.run(debug=True, host='0.0.0.0', port=APPL_PORT, threaded=True)

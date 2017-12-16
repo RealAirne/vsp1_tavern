@@ -16,9 +16,11 @@ DISCOVERED_PORT = ""
 BLACKBOARD_IP = ""
 BLACKBOARD_URL = ""
 BLACKBOARD_URL_NO_TRAILING = ""
-JAUME_IP = ""
+JAUME_URL = ""
 LOGIN_TOKEN = ""
 
+# Ques related
+QUEST_ID = 3
 TOKENS_RECEIVED = 0
 TOKEN_SAVE = []
 
@@ -66,19 +68,20 @@ def discovery():
     sourceip, sourceport = addr
 
     global BLACKBOARD_IP
-    BLACKBOARD_IP = "http://" + str(sourceip)
+    BLACKBOARD_IP = sourceip
 
     global BLACKBOARD_URL_NO_TRAILING
-    BLACKBOARD_URL_NO_TRAILING = str(BLACKBOARD_IP) + ":" + str(DISCOVERED_PORT)
+    BLACKBOARD_URL_NO_TRAILING = "http://" + str(BLACKBOARD_IP) + ":" + str(DISCOVERED_PORT)
 
     # assemble the whole blackboard URL with port and trailing "/"
     global BLACKBOARD_URL
     BLACKBOARD_URL = BLACKBOARD_URL_NO_TRAILING + "/"
     print("adress: " + str(addr))
-    print("blackboard_url: " + str(addr))
+    print("blackboard_url: " + BLACKBOARD_URL)
 
-    global JAUME_IP
-    JAUME_IP = find_user_at_tavern("Jaume")
+    global JAUME_URL
+    JAUME_URL = find_user_at_tavern("Jaume")
+    print("JAUME_IP: " + str(JAUME_URL))
 
     global LOGIN_TOKEN
     LOGIN_TOKEN = get_login_token(username, password)
@@ -104,7 +107,7 @@ def discovery():
 def create_group():
     # in case of creating a group, data is empty. The hint was "watch the location header"...
     # data = ""
-    group_url = "http://" + BLACKBOARD_URL + "taverna/groups"
+    group_url = BLACKBOARD_URL + "taverna/groups"
     reply = requests.post(url=group_url, auth=HTTPBasicAuth(username=username, password=password))
     return reply
 
@@ -113,10 +116,10 @@ def extract_member_url(json_var):
     object_var = json_var['object'][0]
     links = object_var['_links']
     member_url = links['members']
-    group_url = links['self']
+    group_uri = links['self']
     print(member_url)
-    print(group_url)
-    return member_url, group_url
+    print(group_uri)
+    return member_url, group_uri
 
 
 def check_status_validity(taken_quest_response, quest_id):
@@ -151,7 +154,7 @@ def callback():
 
 
 def get_task():
-    response = requests.get(url=BLACKBOARD_URL + 'blackboard/tasks/2', auth=HTTPBasicAuth(username, password))
+    response = requests.get(url=BLACKBOARD_URL + 'blackboard/tasks/' + str(QUEST_ID), auth=HTTPBasicAuth(username, password))
     print(response.content)
     location = response.json()['object']['location']
     resource = response.json()['object']['resource']
@@ -163,13 +166,21 @@ def go_to_location_and_find_host(loc):
     response = requests.get(url=BLACKBOARD_URL_NO_TRAILING + loc, auth=HTTPBasicAuth(username, password))
     print(response.content)
     host = response.json()['object']['host']
-    return str(host)
+    host_url = "http://" + str(host)
+    return host_url
 
 
 def send_tasks_to_group(group_url, task_list, host_ip):
     response = requests.get(group_url, auth=HTTPBasicAuth(username, password))
+    print("SEND TASKS TO ALL MEMBERS")
+    print(repr(response))
+    print(response.text)
     response_as_json = response.json()
+    print(response_as_json)
     member_list = response_as_json['object']['members']
+    # implicit checking whether the list is empty
+    if not member_list:
+        member_list = ["Jaume"]
     # implementing round robin
     task_count = len(task_list)
     counter = 0
@@ -178,11 +189,11 @@ def send_tasks_to_group(group_url, task_list, host_ip):
         for member in member_list:
             member_ip = find_user_at_tavern(member)
             member_url = str(member_ip) + "/assignments"
-            task_resource = task_list[task_count]
+            task_resource = task_list[counter]
             # NONE oder empty string?
             assignment = {"id": counter, "task": host_ip, "resource": task_resource, "method": "post", "data": ""}
             post_response = requests.post(member_url, json.dumps(assignment))
-            check_status_validity(post_response.status_code)
+            check_status_validity(taken_quest_response=post_response, quest_id=QUEST_ID)
     print("completed round robin with task_count: " + str(task_count) + " and counter: " + str(counter))
 
 
@@ -209,12 +220,14 @@ def main():
 
     # gather the information from the group_request to obtain the member_url and join it
     reply_as_json = group_reply.json()
-    member_url, group_url = extract_member_url(reply_as_json)
+    member_url, group_uri = extract_member_url(reply_as_json)
+    group_url = BLACKBOARD_URL_NO_TRAILING + group_uri
+    print("DETECTED GROUP_URL: " + group_url)
 
-    hiring_data = {"group": member_url, "quest": 2, "message": "many danks"}
+    hiring_data = {"group": member_url, "quest": 3, "message": "many danks"}
     # hiring_data = '{"group":' + group_url + ', "quest": "pi", "message": "many danks"}'
     print(json.dumps(hiring_data))
-    hiring_url = JAUME_IP + "/hirings"
+    hiring_url = JAUME_URL + "hirings"
     jaume_reply = requests.post(hiring_url, json.dumps(hiring_data), headers=HEADER_APPL_JSON)
     # jaume_reply = requests.post("http://172.19.0.81:80/hirings", json.dumps(hiring_data), headers=HEADER_APPL_JSON)
     jaume_status = jaume_reply.status_code
@@ -226,7 +239,7 @@ def main():
     host = go_to_location_and_find_host(location)
 
     # The quest-location needs an access token
-    quest_detection_url = host + resource
+    quest_detection_url = str(host) + str(resource)
     quest_detection_response = requests.get(quest_detection_url, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
     print(quest_detection_response)
     next_resource = quest_detection_response.json()['next']
