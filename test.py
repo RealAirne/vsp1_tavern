@@ -4,8 +4,12 @@ import requests
 import time
 from requests.auth import HTTPBasicAuth
 from flask import Flask, request, make_response
+import netifaces as ni
+
 
 app = Flask(__name__)
+
+APPL_PORT = 8000
 
 username = "Jaume"
 password = "Jaume"
@@ -23,6 +27,14 @@ LOGIN_TOKEN = ""
 QUEST_ID = 3
 TOKENS_RECEIVED = 0
 TOKEN_SAVE = []
+
+
+def get_ip():
+    ni.ifaddresses('eth0')
+    ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
+    ip_with_port = str(ip) + ":" + str(APPL_PORT)
+    print("FOUND MY OWN IP: " + str(ip_with_port))
+    return ip_with_port
 
 
 def get_login_token(user, passw):
@@ -122,12 +134,12 @@ def extract_member_url(json_var):
     return member_url, group_uri
 
 
-def check_status_validity(taken_quest_response, quest_id):
-    taken_quest_status = taken_quest_response.status_code
+def check_status_validity(taken_quest_status, quest_id):
+    print("checking validity of status " + str(taken_quest_status))
     if taken_quest_status >= 300:
         print("Couldn't take the quest with id " + str(quest_id) + "!!")
-        print("The result was: ")
-        print(taken_quest_response.json())
+        # print("The result was: ")
+        # print(taken_quest_status.json())
     else:
         print("Quest with the id " + quest_id + " taken!")
 
@@ -188,14 +200,17 @@ def send_tasks_to_group(group_url, task_list, host_ip):
     while counter < task_count:
         for member in member_list:
             member_ip = find_user_at_tavern(member)
-            member_url = str(member_ip) + "/assignments"
+            member_url = str(member_ip) + "assignments"
             task_resource = task_list[counter]
+            ip_with_port = get_ip()
+            callback = "http://" + ip_with_port + "/callback"
             # NONE oder empty string?
-            assignment = {"id": counter, "task": host_ip, "resource": task_resource, "method": "post", "data": ""}
+            assignment = {"id": counter, "task": host_ip, "resource": task_resource, "method": "post", "data": "", "callback": callback, "message": "lets go, boi!"}
             print("asignment is: " + str(assignment))
-            post_response = requests.post(member_url, json.dumps(assignment))
-            check_status_validity(taken_quest_response=post_response, quest_id=QUEST_ID)
+            post_response = requests.post(url=member_url, data=json.dumps(assignment), auth=HTTPBasicAuth(username, password), headers=HEADER_APPL_JSON)
+            check_status_validity(taken_quest_status=post_response.status_code, quest_id=QUEST_ID)
             print("sending task no " + str(counter) + " accomplished...")
+            counter = counter + 1
     print("completed round robin with task_count: " + str(task_count) + " and counter: " + str(counter))
 
 
@@ -260,6 +275,10 @@ def main():
 
 
 main()
+
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=APPL_PORT, threaded=True)
 
 # In order to test the application, post the following snippet of a Dockerfle into a real Dockerfile and upload it into
 # (OwnCloud) vsp2_test/container, as well as the test.py - file

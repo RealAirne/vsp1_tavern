@@ -108,6 +108,7 @@ def check_hiring_data(request_data):
 
 def check_assignment_data(request_data):
     # Are the keys given correct?
+    print(str(request_data))
     id = request_data['id']
     task = request_data['task']
     resource = request_data['resource']
@@ -115,7 +116,7 @@ def check_assignment_data(request_data):
     data = request_data['data']
     callback = request_data['callback']
     message = request_data['message']
-    # how many keys are there? > 7 raises an ERROR (caught in post_hiring())
+    # how many keys are there? > 7 raises an ERROR (caught in assignment_endpoint())
     amount_of_keys = len(dict(request_data).keys())
     if amount_of_keys > 7:
         raise KeyError
@@ -204,18 +205,21 @@ def take_task_and_perform(assignment_dict):
         return 'delete', delete_request
 
 
-def assemble_json_answer(id, task, resource, method, data, user, message):
-    dictionary = {'id': id, 'task': task, 'resource': resource, 'method': method, 'data': data, 'user': user,
-                  'message': message}
-    return json.dumps(dictionary)
+def assemble_json_answer(idd, task, resource, method, data, user, message):
+    dictionary = {"id": idd, "task": task, "resource": resource, "method": method, "data": data, "user": user,
+                  "message": message}
+    return dictionary
 
 
 @app.route('/assignments', methods=['POST'])
 def assignment_endpoint():
     if request.method == 'POST':
-        request_data = request.data
+        request_data = request.json
+        print("The requested assignment is: ")
+        print(str(request_data))
         try:
             check_assignment_data(request_data)
+            print(str(request_data))
         except KeyError:
             return bad_request_response("id, task, resource, method, data, callback, message")
 
@@ -231,10 +235,11 @@ def assignment_endpoint():
         method_used, reply = take_task_and_perform(request_data)
         status = reply.status_code
         # Was the quest succesful?
-        if status in range(start=200, stop=299, step=1):
+        if status >= 200 & status < 300:
             jaume = BLACKBOARD_URL + 'users/Jaume'
             answer = assemble_json_answer(received_id, task, resource, method_used, reply, jaume, reply_text)
-            requests.post(callback, answer)
+            response = requests.post(callback, json.dumps(answer), auth=HTTPBasicAuth("Jaume", "Jaume"), headers=HEADER_APPL_JSON)
+            print(str(response.status_code))
 
             # TODO was passiert, wenn wir eine Quest nicht abschliessen koenen?
             # Produktiv selbst herausfinden, wie eine Task zu loesen ist.
