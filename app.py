@@ -2,6 +2,7 @@ from flask import Flask, request, make_response, g
 import json
 import requests
 import socket
+import threading
 import netifaces as ni
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import ConnectionError, MissingSchema, InvalidURL
@@ -20,7 +21,7 @@ RELEASED = "released"
 WANTING = "wanting"
 HELD = "held"
 
-STATE = RELEASED
+STATE = WANTING
 
 REQUEST = "request"
 REPLYOK = "reply-ok"
@@ -38,7 +39,9 @@ HIRINGS = []
 LIMIT_OF_HIRINGS = 1
 member1 = {'name': 'Arne', 'url': 'http://0.0.0.1/election'}
 member2 = {'name': 'Jerom', 'url': 'http://172.19.0.79:80/election'}
+selfmember = {'name': 'HeroService', 'url': 'http://0.0.0.0:8000/mutex'}
 GROUP_MEMBERS = [member1, member2]
+SELF_GROUP_MEMBER = [selfmember]
 
 # userdata_user = "'user': '/users/Jaume',"
 # userdata_idle = "'idle': False,"
@@ -403,48 +406,86 @@ def election():
 
 ##################### Distributed Mutex ############################
 
+# TODO: waits for answer, no timeout
+class SendRequestThread(threading.Thread):
+    def __init__(self, *args):
+        threading.Thread.__init__(self)
+        self.args = args
+
+    def run(self):
+        print('Thread started')
+        member = self.args[0]
+        url = member['url']
+        payload = create_payload(REQUEST)
+        print("sending to member!: " + url)
+        print("with payload" + payload)
+        requests.post(url, headers=HEADER_APPL_JSON, json=payload)
+        print("ending thread")
+
+
 @app.route('/mutex', methods=['POST'])
 def mutex():
+    response = None
     # Before calculating calculate Lamportclock
+    print("REQUEST IS" + str(request))
     data = request.json
+    print('data: ' + str(data))
     othersLamport = data['time']
     calculateNewLamport(othersLamport)
+    print("currentLamport = " + str(LAMPORTCLOCK))
 
-    # TODO: Logic
     message = data['message']
+    print("439 Message is" + message)
     if message == REPLYOK:
         if STATE == WANTING:
-            # TODO: process
-            calculate_reply_ok_count()
-            claim_mutex_if_save()
-            pass
+            global REPLYOKCOUNT
+            REPLYOKCOUNT += 1
+            # TODO: Change to GROUP_MEMBER
+            if REPLYOKCOUNT >= len(SELF_GROUP_MEMBER):
+                claim_mutex_if_save()
+            response = make_response("OK", 200)
         else:
+            response = make_response("OK", 200)
             pass
     elif message == REQUEST:
         if STATE == RELEASED:
-            # TODO: send reply ok
-            pass
+            print("Message is request && State is Released")
+            payload = create_payload(REPLYOK)
+            response = make_response(payload, 200)
+
         elif STATE == HELD:
-            # TODO: store request somehow (queue?)
-            pass
+            store_request()
+
         elif STATE == WANTING:
-            # TODO: store depending on lamportclock
-            pass
+            if othersLamport > LAMPORTCLOCK:
+                store_request()
+            else:
+                payload = create_payload(REPLYOK)
+                response = make_response(payload, 200)
         pass
 
     # before answer, increase lamport (for answer)
     increaseLamport()
-    return "OK"
+    return response
 
 
-def calculate_reply_ok_count():
-    # TODO
+# TODO: change arguments in calling methods
+def store_request():
     pass
 
 
 def claim_mutex_if_save():
-    # TODO
+    # TODO: Claim Mutex, do whatever you like
+    # TODO: Release Mutex
+    # TODO: change state to Released!
+    print("CLAIM THE MUTEX!")
     pass
+
+
+@app.route('/testmutex', methods=['GET'])
+def testmutex():
+    request_mutex()
+    return 'OK'
 
 
 # Only tells Mutexstate, but also affects lamport-clock
@@ -468,24 +509,25 @@ def calculateNewLamport(othersLamport):
 
 
 def request_mutex():
-    #TODO: auslagern in 3 Threads, jeder Thread wartet auf ok und feuert dann signal zum betreten
-    #TODO: koennte mit threaded = true kollidieren
+    # TODO: auslagern in 3 Threads, jeder Thread wartet auf ok und feuert dann signal zum betreten
+    # TODO: koennte mit threaded = true kollidieren
     if not STATE == HELD:
+        print("487, requesting mutex")
         change_state(WANTING)
-        for member in GROUP_MEMBERS:
-            url = member['url']
-            payload = create_request_payload(url)
-            requests.post(url, payload)
+        for member in SELF_GROUP_MEMBER:
+            print('trying to start thread')
+            thread = SendRequestThread(member).start()
     pass
 
 
-def create_request_payload(url):
-    # TODO: maybe str(url)
-    # TODO: reply == own url
-    payload = json.dumps({'message': 'request', 'url': url, 'reply': get_ip() + '/mutex'})
+def create_payload(request):
+    # TODO: Eigene ip einkommentieren
+    # payload = json.dumps({'message': 'request', 'url': url, 'reply': get_ip() + '/mutex'})
+    payload = json.dumps({'message': request, 'time': LAMPORTCLOCK, 'reply': 'http://0.0.0.0:8000/mutex'})
     return payload
 
 
+# TODO: If changes state to Released from Held, send first in qaiting queue request ok
 def change_state(state):
     if not STATE == HELD:
         STATE == state
@@ -510,6 +552,7 @@ def main():
     # print("Blackboard_no_trail: " + BLACKBOARD_URL_NO_TRAIL)
     # register_at_tavern()
     # bully()
+    # request_mutex()
 
 
 main()
