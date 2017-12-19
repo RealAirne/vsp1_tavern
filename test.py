@@ -1,11 +1,12 @@
 import json
 import socket
+from threading import Thread
+
 import requests
 import time
 from requests.auth import HTTPBasicAuth
 from flask import Flask, request, make_response
 import netifaces as ni
-
 
 app = Flask(__name__)
 
@@ -22,11 +23,13 @@ BLACKBOARD_URL = ""
 BLACKBOARD_URL_NO_TRAILING = ""
 JAUME_URL = ""
 LOGIN_TOKEN = ""
+QUEST_DETECTION_URL = ""
 
 # Ques related
 QUEST_ID = 3
 TOKENS_RECEIVED = 0
 TOKEN_SAVE = []
+TASK_COUNT = 0
 
 
 def get_ip():
@@ -99,23 +102,6 @@ def discovery():
     LOGIN_TOKEN = get_login_token(username, password)
 
 
-# {
-#     "message": "Created Group",
-#     "object": [
-#         {
-#             "_links": {
-#                 "members": "/taverna/groups/55/members", TODO moegliche Verwechsungen!!
-#                 "self": "/taverna/groups/55"
-#             },
-#             "id": 55,
-#             "members": [],
-#             "owner": "Jaume"
-#         }
-#     ],
-#     "status": "success"
-# }
-
-
 def create_group():
     # in case of creating a group, data is empty. The hint was "watch the location header"...
     # data = ""
@@ -161,12 +147,17 @@ def callback():
         global TOKEN_SAVE
         TOKEN_SAVE = TOKEN_SAVE.append(token)
         print("Current TOKEN_SAVE looks like this: " + repr(TOKEN_SAVE))
+        # check received tokens
+        if TOKENS_RECEIVED == TASK_COUNT:
+            accomplish_quest(QUEST_DETECTION_URL)
+
     else:
         return not_allowed_response()
 
 
 def get_task():
-    response = requests.get(url=BLACKBOARD_URL + 'blackboard/tasks/' + str(QUEST_ID), auth=HTTPBasicAuth(username, password))
+    response = requests.get(url=BLACKBOARD_URL + 'blackboard/tasks/' + str(QUEST_ID),
+                            auth=HTTPBasicAuth(username, password))
     print(response.content)
     location = response.json()['object']['location']
     resource = response.json()['object']['resource']
@@ -205,9 +196,11 @@ def send_tasks_to_group(group_url, task_list, host_ip):
             ip_with_port = get_ip()
             callback = "http://" + ip_with_port + "/callback"
             # NONE oder empty string?
-            assignment = {"id": counter, "task": host_ip, "resource": task_resource, "method": "post", "data": "", "callback": callback, "message": "lets go, boi!"}
+            assignment = {"id": counter, "task": host_ip, "resource": task_resource, "method": "post", "data": "",
+                          "callback": callback, "message": "lets go, boi!"}
             print("asignment is: " + str(assignment))
-            post_response = requests.post(url=member_url, data=json.dumps(assignment), auth=HTTPBasicAuth(username, password), headers=HEADER_APPL_JSON)
+            post_response = requests.post(url=member_url, data=json.dumps(assignment),
+                                          auth=HTTPBasicAuth(username, password), headers=HEADER_APPL_JSON)
             check_status_validity(taken_quest_status=post_response.status_code, quest_id=QUEST_ID)
             print("sending task no " + str(counter) + " accomplished...")
             counter = counter + 1
@@ -223,7 +216,8 @@ def wait_for_tokens(task_count):
 def accomplish_quest(quest_detection_url):
     accomplish_string = {"tokens": TOKEN_SAVE}
     accomplish_data = json.dumps(accomplish_string)
-    accomplish_response = requests.post(quest_detection_url, accomplish_data, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
+    accomplish_response = requests.post(quest_detection_url, accomplish_data,
+                                        headers={'Authorization': 'Token ' + LOGIN_TOKEN})
     print("accomplished quest?")
     print(str(accomplish_response.status_code) + ", " + accomplish_response.json())
 
@@ -256,8 +250,9 @@ def main():
     host = go_to_location_and_find_host(location)
 
     # The quest-location needs an access token
-    quest_detection_url = str(host) + str(resource)
-    quest_detection_response = requests.get(quest_detection_url, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
+    global QUEST_DETECTION_URL
+    QUEST_DETECTION_URL = str(host) + str(resource)
+    quest_detection_response = requests.get(QUEST_DETECTION_URL, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
     print(quest_detection_response)
     next_resource = quest_detection_response.json()['next']
 
@@ -265,20 +260,52 @@ def main():
     quest_response = requests.get(quest_url, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
     quest_response_as_json = quest_response.json()
     task_list = quest_response_as_json['steps_todo']
-    task_count = len(task_list)
+
+    global TASK_COUNT
+    TASK_COUNT = len(task_list)
 
     send_tasks_to_group(group_url=group_url, task_list=task_list, host_ip=host)
 
-    wait_for_tokens(task_count)
 
-    accomplish_quest(quest_detection_url)
+@app.before_first_request
+def startup():
+    print("running test...")
+    main()
 
 
-main()
+@app.route('/')
+def hello_world():
+    print("hola putas!")
+    return "hi"
+
+
+def start_runner():
+    # def start_loop():
+    #     not_started = True
+    #     while not_started:
+    #         print('In start loop')
+    #         try:
+    #             r = requests.get('http://0.0.0.0:8000/')
+    #             if r.status_code == 200:
+    #                 print('Server started, quiting start_loop')
+    #                 not_started = False
+    #             print(r.status_code)
+    #         except:
+    #             print('Server not yet started')
+    #         time.sleep(2)
+    #
+    # no racecondition at all
+    time.sleep(15)
+    print('Starting the main...')
+    main()
 
 
 if __name__ == '__main__':
+    thread1 = Thread(target=start_runner)
+    thread1.start()
+    print("running app...")
     app.run(debug=True, host='0.0.0.0', port=APPL_PORT, threaded=True)
+
 
 # In order to test the application, post the following snippet of a Dockerfle into a real Dockerfile and upload it into
 # (OwnCloud) vsp2_test/container, as well as the test.py - file

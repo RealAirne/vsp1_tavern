@@ -177,8 +177,6 @@ def hiring_endpoint():
         return not_allowed_response()
 
 
-# TODO only can perform tasks, if the method is already known --> Add Regex to filter operation at the quest-loc
-# TODO how about authentication?
 def take_task_and_perform(assignment_dict):
     task_uri = assignment_dict['task']
     resource = assignment_dict['resource']
@@ -241,11 +239,11 @@ def assignment_endpoint():
         method_used, reply = take_task_and_perform(request_data)
         status = reply.status_code
         # Was the quest succesful?
-        if status >= 200 & status < 300:
+        if 200 <= status < 300:
             jaume = BLACKBOARD_URL + 'users/Jaume'
-            answer = assemble_json_answer(received_id, task, resource, method_used, reply, jaume, reply_text)
+            answer = assemble_json_answer(received_id, task, resource, method_used, reply.json(), jaume, reply_text)
             print(answer)
-            response = requests.post(callback, answer, headers=HEADER_APPL_JSON)
+            response = requests.post(callback, json.dumps(answer), headers=HEADER_APPL_JSON)
             print(str(response.status_code))
 
     else:
@@ -477,8 +475,8 @@ def main():
     register_at_tavern()
     # bully()
 
-
 main()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=APPL_PORT, threaded=True)
+
