@@ -229,6 +229,12 @@ def assignment_endpoint():
         callback = request_data['callback']
         message_text = request_data['message']
 
+        print("received ID: " + str(received_id))
+        print("task:  " + str(task))
+        print("resource: " + str(resource))
+        print("callback : " + str(callback))
+        print("mesage_text: " + str(message_text))
+
         reply_text = "ye boiii"
 
         # After pre-checks are completed, the hero can take the task
@@ -238,12 +244,9 @@ def assignment_endpoint():
         if status >= 200 & status < 300:
             jaume = BLACKBOARD_URL + 'users/Jaume'
             answer = assemble_json_answer(received_id, task, resource, method_used, reply, jaume, reply_text)
-            response = requests.post(callback, json.dumps(answer), auth=HTTPBasicAuth("Jaume", "Jaume"), headers=HEADER_APPL_JSON)
+            print(answer)
+            response = requests.post(callback, answer, headers=HEADER_APPL_JSON)
             print(str(response.status_code))
-
-            # TODO was passiert, wenn wir eine Quest nicht abschliessen koenen?
-            # Produktiv selbst herausfinden, wie eine Task zu loesen ist.
-            # TODO
 
     else:
         return not_allowed_response()
