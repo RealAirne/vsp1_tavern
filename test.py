@@ -32,6 +32,12 @@ TOKEN_SAVE = []
 TASK_COUNT = 0
 
 
+@app.before_request
+def log_request_info():
+    app.logger.debug('Headers: %s', request.headers)
+    app.logger.debug('Body: %s', request.get_data())
+
+
 def get_ip():
     ni.ifaddresses('eth0')
     ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
@@ -185,6 +191,7 @@ def send_tasks_to_group(group_url, task_list, host_ip):
     if not member_list:
         member_list = ["Jaume"]
     # implementing round robin
+    print(str(member_list))
     task_count = len(task_list)
     counter = 0
     print("starting round robin with task_count: " + str(task_count) + " and counter: " + str(counter))
@@ -199,6 +206,7 @@ def send_tasks_to_group(group_url, task_list, host_ip):
             assignment = {"id": counter, "task": host_ip, "resource": task_resource, "method": "post", "data": "",
                           "callback": callback, "message": "lets go, boi!"}
             print("asignment is: " + str(assignment))
+            print("url is: " + member_url)
             post_response = requests.post(url=member_url, data=json.dumps(assignment),
                                           auth=HTTPBasicAuth(username, password), headers=HEADER_APPL_JSON)
             check_status_validity(taken_quest_status=post_response.status_code, quest_id=QUEST_ID)
@@ -207,9 +215,9 @@ def send_tasks_to_group(group_url, task_list, host_ip):
     print("completed round robin with task_count: " + str(task_count) + " and counter: " + str(counter))
 
 
-def wait_for_tokens(task_count):
-    while TOKENS_RECEIVED < task_count:
-        print("Received " + str(TOKENS_RECEIVED) + "/" + str(task_count) + "tokens, sleeping some and retrying then...")
+def wait_for_tokens():
+    while TOKENS_RECEIVED < TASK_COUNT:
+        print("Received " + str(TOKENS_RECEIVED) + "/" + str(TASK_COUNT) + "tokens, sleeping some and retrying then...")
         time.sleep(3)
 
 
@@ -260,11 +268,14 @@ def main():
     quest_response = requests.get(quest_url, headers={'Authorization': 'Token ' + LOGIN_TOKEN})
     quest_response_as_json = quest_response.json()
     task_list = quest_response_as_json['steps_todo']
+    print(task_list)
 
     global TASK_COUNT
     TASK_COUNT = len(task_list)
 
     send_tasks_to_group(group_url=group_url, task_list=task_list, host_ip=host)
+    wait_for_tokens()
+    accomplish_quest(quest_detection_url=QUEST_DETECTION_URL)
 
 
 @app.before_first_request

@@ -72,6 +72,21 @@ def create_algorithmdata(payload_string):
 # return token
 
 
+## handles start of bully AFTER sending 'answer'
+def after_this_request(func):
+    if not hasattr(g, 'call_after_request'):
+        g.call_after_request = []
+    g.call_after_request.append(func)
+    return func
+
+
+@app.after_request
+def per_request_callbacks(response):
+    for func in getattr(g, 'call_after_request', ()):
+        response = func(response)
+    return response
+
+
 # GET returns
 @app.route('/')
 def hello_world():
@@ -209,6 +224,12 @@ def assemble_json_answer(idd, task, resource, method, data, user, message):
     return dictionary
 
 
+@app.before_request
+def log_request_info():
+    app.logger.debug('Headers: %s', request.headers)
+    app.logger.debug('Body: %s', request.get_data())
+
+
 @app.route('/assignments', methods=['POST'])
 def assignment_endpoint():
     if request.method == 'POST':
@@ -235,19 +256,25 @@ def assignment_endpoint():
 
         reply_text = "ye boiii"
 
-        # After pre-checks are completed, the hero can take the task
-        method_used, reply = take_task_and_perform(request_data)
-        status = reply.status_code
-        # Was the quest succesful?
-        if 200 <= status < 300:
-            jaume = BLACKBOARD_URL + 'users/Jaume'
-            answer = assemble_json_answer(received_id, task, resource, method_used, reply.json(), jaume, reply_text)
-            print(answer)
-            response = requests.post(callback, json.dumps(answer), headers=HEADER_APPL_JSON)
-            print(str(response.status_code))
+        @after_this_request
+        def send_callback(response2):
+            # After pre-checks are completed, the hero can take the task
+            method_used, reply = take_task_and_perform(request_data)
+            status = reply.status_code
+            # Was the quest succesful?
+            if 200 <= status < 300:
+                jaume = BLACKBOARD_URL + 'users/Jaume'
+                answer = assemble_json_answer(received_id, task, resource, method_used, reply.json(), jaume, reply_text)
+                print(answer)
+                response = requests.post(callback, json.dumps(answer), headers=HEADER_APPL_JSON)
+                print(str(response.status_code))
+                return response2
+
+        return make_response("ack", 200)
 
     else:
         return not_allowed_response()
+
 
 
 def get_ip():
@@ -377,21 +404,6 @@ def send_election():
         raise ValueError('Nobody reached')
 
 
-## handles start of bully AFTER sending 'answer'
-def after_this_request(func):
-    if not hasattr(g, 'call_after_request'):
-        g.call_after_request = []
-    g.call_after_request.append(func)
-    return func
-
-
-@app.after_request
-def per_request_callbacks(response):
-    for func in getattr(g, 'call_after_request', ()):
-        response = func(response)
-    return response
-
-
 @app.route('/election', methods=['POST'])
 def election():
     data = request.json
@@ -475,8 +487,8 @@ def main():
     register_at_tavern()
     # bully()
 
+
 main()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=APPL_PORT, threaded=True)
-
